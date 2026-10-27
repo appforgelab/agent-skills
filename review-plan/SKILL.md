@@ -1,26 +1,29 @@
 ---
-name: sol-plan
-description: Use when the user says "sol plan"
+name: review-plan
+description: Use when the user says "<model> plan", for example "sol plan" or "opus plan"
 metadata:
   harness: [claude, codex, opencode]
 ---
 
-# Sol Plan
+# Review Plan
 
-Before writing any code, hand the issue or plan to GPT Sol 6.1 xhigh for
-review. Update the plan with what you think is worth it. Keep it simple: push
-back on extra machinery, rare edge cases and precision nobody needs, and move
-optional extras to a follow-up issue. Don't be afraid to push back. After
+Before writing any code, hand the issue or plan to the model the user named
+for review. Update the plan with what you think is worth it. Keep it simple:
+push back on extra machinery, rare edge cases and precision nobody needs, and
+move optional extras to a follow-up issue. Don't be afraid to push back. After
 you've updated the plan or pushed back, hand it back for review, in a loop.
 
 ## How
 
 1. Make sure the plan is written down: a GitHub issue, or a draft in the
-   conversation. If it's an issue, saying "sol plan" authorizes editing its
+   conversation. If it's an issue, saying "<model> plan" authorizes editing its
    body, so don't ask first.
 2. Start a review with T3's `delegate_task`:
-   - target: provider instance `codex`, model `gpt-6.1-sol`,
-     options `{"reasoningEffort": "xhigh"}`
+   - target: the model the user named ("sol", "opus", "glm", "muse", ...).
+     Find it with T3's `orchestrator_capabilities` (pass the name as
+     `search`). Prefer the full model over Flash or Free variants. If nothing
+     matches, or it is still unclear, ask the user which one. Set reasoning
+     effort to `xhigh` where the model offers it; otherwise leave it unset.
    - prompt: the issue URL or the full plan text, the goal, and that the
      reviewer should review only (no edits, no comments) and report gaps,
      risks and unneeded complexity.

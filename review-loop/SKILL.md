@@ -1,26 +1,30 @@
 ---
-name: sol-loop
-description: Use when the user says "sol loop"
+name: review-loop
+description: Use when the user says "<model> loop", for example "sol loop" or "opus loop"
 metadata:
   harness: [claude, codex, opencode]
 ---
 
-# Sol Loop
+# Review Loop
 
 When you finish working on a feature, self-review and fix until happy, then
-open a PR, then hand it to GPT Sol 6.1 xhigh for review. Fix what you think is
-worth it, minimally if possible. Beware of scope creep: it's better to open a
-follow-up issue than to start a big change. Don't be afraid to push back. After
-you've made the changes or pushed back, hand it back for review, in a loop.
+open a PR, then hand it to the model the user named for review. Fix what you
+think is worth it, minimally if possible. Beware of scope creep: it's better
+to open a follow-up issue than to start a big change. Don't be afraid to push
+back. After you've made the changes or pushed back, hand it back for review,
+in a loop.
 
 ## How
 
 1. Self-review the diff and fix until you're happy. Run the checks the
    project requires before a PR.
-2. Open the PR. Saying "sol loop" authorizes it, so don't ask first.
+2. Open the PR. Saying "<model> loop" authorizes it, so don't ask first.
 3. Start a review with T3's `delegate_task`:
-   - target: provider instance `codex`, model `gpt-6.1-sol`,
-     options `{"reasoningEffort": "xhigh"}`
+   - target: the model the user named ("sol", "opus", "glm", "muse", ...).
+     Find it with T3's `orchestrator_capabilities` (pass the name as
+     `search`). Prefer the full model over Flash or Free variants. If nothing
+     matches, or it is still unclear, ask the user which one. Set reasoning
+     effort to `xhigh` where the model offers it; otherwise leave it unset.
    - prompt: the PR URL, what the feature is for, and that the reviewer should
      review only (no edits, no PR comments) and report findings back.
 4. For each finding, fix it minimally, push back with a reason, or open a
