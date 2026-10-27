@@ -1,0 +1,3 @@
+interface:
+  display_name: "Issue Review Loop"
+  short_description: "Another model reviews a GitHub issue in a loop"
