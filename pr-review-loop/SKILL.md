@@ -1,6 +1,6 @@
 ---
 name: pr-review-loop
-description: Have another model review a PR in a loop until it's done. Use when the user asks for a model (for example Sol or Opus) to review a PR or feature in a loop, or says "sol loop". The argument is the reviewer's short name.
+description: Have another model review a PR in a loop until it's done. Use when the user says "pr review loop" followed by the reviewer (for example "pr review loop opus") or asks a model to review a PR or feature in a loop. The argument is the reviewer's short name: sol, opus, glm or muse.
 metadata:
   harness: [claude, codex, opencode]
 ---
@@ -23,7 +23,7 @@ loop.
    failed check, fix it, push, and wait again. Start the review only once T3
    reports that the required checks passed.
 3. Start a review with T3's `delegate_task`:
-   - target: the reviewer the user named ("sol", "opus", "glm", "muse", ...).
+   - target: the reviewer the user named: sol, opus, glm or muse.
      Find it with T3's `orchestrator_capabilities` (pass the name as
      `search`). Prefer the newest version, and the full model over lighter
      variants such as Flash. If nothing matches, or it is still unclear, ask

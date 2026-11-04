@@ -1,6 +1,6 @@
 ---
 name: issue-review-loop
-description: Have another model review a GitHub issue in a loop before any code is written. Use when the user asks for a model (for example Sol or Opus) to review an issue. The argument is the reviewer's short name.
+description: Have another model review a GitHub issue in a loop before any code is written. Use when the user asks a model to review an issue. The argument is the reviewer's short name: sol, opus, glm or muse.
 metadata:
   harness: [claude, codex, opencode]
 ---
@@ -21,7 +21,7 @@ it back for review, in a loop.
    editing its body, so don't ask first. If there is no issue, say so and
    stop.
 2. Start a review with T3's `delegate_task`:
-   - target: the reviewer the user named ("sol", "opus", "glm", "muse", ...).
+   - target: the reviewer the user named: sol, opus, glm or muse.
      Find it with T3's `orchestrator_capabilities` (pass the name as
      `search`). Prefer the newest version, and the full model over lighter
      variants such as Flash. If nothing matches, or it is still unclear, ask
