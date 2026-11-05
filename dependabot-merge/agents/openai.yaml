@@ -1,0 +1,3 @@
+interface:
+  display_name: "Dependabot Merge"
+  short_description: "Merge Dependabot PRs one at a time, cheapest first"
