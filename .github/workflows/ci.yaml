@@ -28,3 +28,6 @@ jobs:
 
       - name: Lint markdown
         run: npm run lint:md
+
+      - name: Check skill files
+        run: npm run check:skills

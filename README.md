@@ -25,6 +25,9 @@ linked), then run `./link.sh`.
   tool names ("use the Read tool").
 - `name` and `description` are required in the frontmatter; anything else is
   optional and may be ignored by some CLIs.
+- `name` must match the skill's folder, and `description` must stay within
+  1024 characters. `npm run check:skills` validates the frontmatter and the
+  optional `agents/openai.yaml`; CI runs it on every PR and push to main.
 - Keep `SKILL.md` short and move detail into `references/`.
 - Project-only skills belong in that project's repo (`.claude/skills/`, with
   `.agents/skills` symlinked to it), not here.

@@ -1,6 +1,6 @@
 ---
 name: pr-review-loop
-description: Have another model review a PR in a loop until it's done. Use when the user says "pr review loop" followed by the reviewer (for example "pr review loop opus") or asks a model to review a PR or feature in a loop. The argument is the reviewer's short name: sol, opus, glm or muse.
+description: Have another model review a PR in a loop until it's done. Use when the user says "pr review loop" followed by the reviewer (for example "pr review loop opus") or asks a model to review a PR or feature in a loop. The argument is the reviewer's short name, one of sol, opus, glm or muse.
 metadata:
   harness: [claude, codex, opencode]
 ---
