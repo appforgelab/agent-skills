@@ -50,11 +50,22 @@ function checkSkill(dir) {
     }
     if (typeof frontmatter.name !== "string" || !frontmatter.name.trim()) {
       fail(skillFile, "frontmatter `name` is required");
-    } else if (frontmatter.name !== name) {
-      fail(
-        skillFile,
-        `frontmatter name "${frontmatter.name}" does not match the directory "${name}"`,
-      );
+    } else {
+      if (frontmatter.name !== name) {
+        fail(
+          skillFile,
+          `frontmatter name "${frontmatter.name}" does not match the directory "${name}"`,
+        );
+      }
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(frontmatter.name)) {
+        fail(
+          skillFile,
+          "`name` may only contain lowercase letters, digits and single hyphens, not at the start or end",
+        );
+      }
+      if (frontmatter.name.length > 64) {
+        fail(skillFile, "`name` must be at most 64 characters");
+      }
     }
     if (typeof frontmatter.description !== "string" || !frontmatter.description.trim()) {
       fail(skillFile, "frontmatter `description` is required");
