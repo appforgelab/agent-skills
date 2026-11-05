@@ -1,0 +1,11 @@
+{
+  "MD041": true,
+  "MD034": true,
+  "MD012": true,
+  "MD013": {
+    "line_length": 130,
+    "tables": false,
+    "code_blocks": false
+  },
+  "MD007": { "indent": 4 }
+}
