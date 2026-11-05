@@ -3,9 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint:md": "markdownlint \"**/*.md\" --ignore-path .markdownlintignore"
+    "lint:md": "markdownlint \"**/*.md\" --ignore-path .markdownlintignore",
+    "check:skills": "node scripts/check-skills.mjs"
   },
   "devDependencies": {
-    "markdownlint-cli": "^0.49.1"
+    "markdownlint-cli": "^0.49.1",
+    "yaml": "^2.9.1"
   }
 }

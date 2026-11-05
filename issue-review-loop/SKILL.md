@@ -1,6 +1,6 @@
 ---
 name: issue-review-loop
-description: Have another model review a GitHub issue in a loop before any code is written. Use when the user asks a model to review an issue. The argument is the reviewer's short name: sol, opus, glm or muse.
+description: Have another model review a GitHub issue in a loop before any code is written. Use when the user asks a model to review an issue. The argument is the reviewer's short name, one of sol, opus, glm or muse.
 metadata:
   harness: [claude, codex, opencode]
 ---
