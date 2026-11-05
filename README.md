@@ -7,7 +7,7 @@ and `~/.config/opencode/skills/`.
 
 ## Layout
 
-```
+```text
 <skill-name>/
   SKILL.md        # required: frontmatter with name + description
   scripts/        # optional: deterministic steps, called by relative path
