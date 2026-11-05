@@ -2,14 +2,14 @@
 // Validates every skill directory: SKILL.md frontmatter and agents/openai.yaml.
 // Usage: node scripts/check-skills.mjs [root] — defaults to the repo root.
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";import { basename, join } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { basename, join, resolve } from "node:path";
 import { parse } from "yaml";
 
-const root = process.argv[2] ?? join(import.meta.dirname, "..");
+const root = resolve(process.argv[2] ?? join(import.meta.dirname, ".."));
 const MAX_DESCRIPTION = 1024;
-// Repository and per-skill layout directories that are not skill folders
-// (see the Layout section in README.md).
-const IGNORED_DIRS = new Set(["node_modules", "scripts", "references", "agents"]);
+// Repository directories that are not skill folders.
+const IGNORED_DIRS = new Set(["node_modules", "scripts"]);
 
 const failures = [];
 const fail = (where, message) => failures.push(`${where}: ${message}`);
@@ -120,6 +120,9 @@ if (failures.length > 0) {
   for (const problem of failures) {
     console.error(`  - ${problem}`);
   }
+  process.exitCode = 1;
+} else if (skillDirs.length === 0) {
+  console.error("check-skills: no skill folders found — nothing validated");
   process.exitCode = 1;
 } else {
   console.log(`check-skills: OK (${skillDirs.length} skills)`);
