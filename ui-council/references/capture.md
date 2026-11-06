@@ -36,7 +36,10 @@ Use T3's device tools, so the user can watch in the Device panel:
      names map to different scales on each platform. Android's own maximum
      is 200% from Android 14.
    - `appearance dark` or `light`.
-   - `airplane`, `wifi` or `mobile-data` `on` or `off`.
+   - Android only: `airplane`, `wifi` or `mobile-data` `on` or `off`. On an
+     iOS simulator, `airplane` and `wifi` only change the status bar, and
+     the app stays online. Find another real way to reach an offline state
+     there, or report that it isn't supported and ask.
 
 ## Web
 

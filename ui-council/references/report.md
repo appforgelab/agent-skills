@@ -28,13 +28,13 @@ Layout:
 
 ## Issue comment
 
-Post a comment on the issue with:
+When there is an issue, post a comment on it with:
 
 - the scores table;
 - what changed in each round;
 - the points not acted on;
 - the questions;
-- a link to the PR.
+- a link to the PR, if there is one.
 
 GitHub can't show local files, so leave the images out and say the full report
 was shown in the session.

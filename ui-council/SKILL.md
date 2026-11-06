@@ -82,8 +82,9 @@ and offer the defaults:
    and the tests that cover these screens. Build, capture the same states,
    and go back to step 3 with fresh raters.
 7. **Finish** ([report](references/report.md)):
-   - Commit. If no issue was given, open one that records what was done and
-     why. Then open a PR that refers to the issue.
+   - If anything changed, commit. If no issue was given, open one that
+     records what was done and why. Then open a PR that refers to the issue.
+     A run with no changes, such as rate only, skips this step.
    - Show the report page: the scores, each state before and after, the
      changes made in each round, and the questions.
    - Post the scores, the changes and the questions as a comment on the
