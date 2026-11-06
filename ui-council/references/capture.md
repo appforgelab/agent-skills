@@ -52,4 +52,6 @@ Use T3's browser preview tools:
    round's folder under the shot's name.
 4. Large text, if the user wants it: raise the root font size, for example
    with `preview_evaluate` setting `document.documentElement.style.fontSize`
-   to `200%`. Say in `{SHOTS}` that the text is enlarged.
+   to `200%`. Then check the shot: text sized in pixels or drawn on a canvas
+   doesn't grow. Only if the text really grew, say in `{SHOTS}` that it is
+   enlarged. Otherwise report the state as unsupported and ask.
