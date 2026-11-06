@@ -1,38 +1,134 @@
 # agent-skills
 
-Personal skills shared by every agent CLI (Claude Code, Codex, OpenCode) and
-so by T3 Code, which runs those CLIs. This repo holds the only copy you edit;
-`./link.sh` symlinks each skill into `~/.claude/skills/`, `~/.codex/skills/`
-and `~/.config/opencode/skills/`.
+A skill is a folder of instructions that teaches a coding agent one workflow,
+such as merging Dependabot PRs or running a review loop. The agent loads a
+skill when your request matches the skill's description, or when you call the
+skill by name. The skills here are written to work the same in every agent
+CLI: Claude Code, Codex and OpenCode, and so in T3 Code, which runs those
+CLIs.
 
-## Layout
+## Skills
+
+Call a skill by name, for example `/pr-review-loop opus` in Claude Code, or
+describe the task in plain words. The review and UI skills hand work to other
+models through T3 Code, so they need to run inside T3 Code.
+
+### dependabot-merge
+
+Merges the open Dependabot PRs one at a time: the cheapest and safest first,
+the riskiest last. It asks Dependabot to rebase each PR and merges only after
+fresh CI passes.
+
+- **Use when:** a batch of Dependabot PRs is waiting.
+- **Parameters:** none. If the repository has its own Dependabot notes, such
+  as `docs/dependabot-prs.md`, those override the defaults.
+
+### issue-review-loop
+
+Another model reviews a GitHub issue before any code is written. The agent
+updates the issue or pushes back, then asks for another round, until the
+reviewer approves.
+
+- **Use when:** an issue is written and you want it checked before work
+  starts.
+- **Parameters:** the reviewer: `sol`, `opus`, `glm` or `muse`. Example:
+  `/issue-review-loop sol`.
+- **Needs:** T3 Code.
+
+### pr-review-loop
+
+For finished work: the agent reviews its own diff, opens the PR and waits for
+CI. Then another model reviews the PR in rounds, and the agent fixes or
+pushes back until the reviewer approves.
+
+- **Use when:** a feature is done and ready for review.
+- **Parameters:** the reviewer: `sol`, `opus`, `glm` or `muse`. Example:
+  `/pr-review-loop opus`.
+- **Needs:** T3 Code.
+
+### ui-council
+
+A panel of models rates screenshots of an app's screens without knowing what
+changed. The agent improves the UI between rounds, then shows each screen
+before and after, with the scores.
+
+- **Use when:** you want screens scored, critiqued or improved.
+- **Parameters:** all optional. The skill asks for any that are missing:
+    - **Platform:** `android` (default), `ios` or `web`.
+    - **Screens and states:** for example Settings when signed out, signed in,
+      after an error, and with large text. You can also ask for the whole app.
+    - **Raters:** `sol` and `opus` by default.
+    - **When to stop:** a number of rounds (default 1), or a target average
+      score, such as 9.0, with a round limit (default 3).
+    - **Mode:** improve (default) or rate only.
+    - **Issue:** an existing issue whose decisions the changes must respect.
+- **Example:** `/ui-council android, Settings signed in and signed out, until
+  9.0`.
+- **Needs:** T3 Code, plus an emulator, a simulator or the browser preview.
+
+## Install
+
+Clone this repository, then run:
+
+```bash
+./link.sh
+```
+
+The script links every skill folder into each CLI's skills folder:
+`~/.claude/skills/`, `~/.codex/skills/` and `~/.config/opencode/skills/`.
+
+- **Edits take effect at once.** The links point into this checkout. That
+  also means switching branches changes what the agents see.
+- **Re-run it after adding or removing a skill.** It's safe to re-run: it
+  never replaces a real folder, and it removes links to deleted skills.
+- **Leave two folders alone:** `~/.claude/skills/synced/` and
+  `~/.codex/skills/.system/`. The apps manage them.
+
+## Writing a skill
+
+### Steps
+
+1. Copy `_template/` to a new folder named after the skill. Folders whose
+   names start with `_` are never linked.
+2. Write `SKILL.md`, then run `./link.sh`.
+3. Add the skill to [Skills](#skills) above.
+4. Run the checks, then open a PR.
+
+### Layout
 
 ```text
 <skill-name>/
-  SKILL.md        # required: frontmatter with name + description
-  scripts/        # optional: deterministic steps, called by relative path
-  references/     # optional: details loaded only when SKILL.md points to them
+  SKILL.md            # required: frontmatter with name and description
+  references/         # optional: details that SKILL.md links to
+  scripts/            # optional: fixed steps, called by relative path
   agents/openai.yaml  # optional: display name shown in Codex and T3 Code
 ```
 
-Copy `_template/` to start a new skill (folders starting with `_` are not
-linked), then run `./link.sh`.
+### Frontmatter
 
-## Writing skills that work on every model
+- **`name`:** the folder's name. It may only use lowercase letters, digits and
+  single hyphens, not at the start or end, and is at most 64 characters.
+- **`description`:** at most 1,024 characters. Agents use it to decide when
+  to load the skill, so say what the skill does and when to use it.
+- **Other fields** are optional, and some CLIs ignore them.
 
-- The `description` decides when the skill is used: say what it does and when.
-- Describe actions ("read the file", "run `scripts/check.sh`"), not one CLI's
-  tool names ("use the Read tool").
-- `name` and `description` are required in the frontmatter; anything else is
-  optional and may be ignored by some CLIs.
-- `name` must match the skill's folder, use only lowercase letters, digits
-  and single hyphens (not at the start or end), and stay within 64
-  characters; `description` must stay within
-  1024 characters. `npm run check:skills` validates the frontmatter and the
-  optional `agents/openai.yaml`; CI runs it on every PR and push to main.
-- Keep `SKILL.md` short and move detail into `references/`.
-- Project-only skills belong in that project's repo (`.claude/skills/`, with
-  `.agents/skills` symlinked to it), not here.
+### Guidelines
 
-Do not put files in `~/.claude/skills/synced/` or `~/.codex/skills/.system/`;
-the apps manage those folders.
+- Describe actions, such as "read the file" or "run `scripts/check.sh`", not
+  one CLI's tool names.
+- Keep `SKILL.md` short, and move detail into `references/`.
+- This repository is public: no credentials, personal details or
+  project-specific content. See [AGENTS.md](AGENTS.md).
+- A skill for one project belongs in that project's repository, in
+  `.claude/skills/` with `.agents/skills` linked to it.
+
+### Checks
+
+Install the tools with `npm ci`, using the Node version in `.nvmrc`. Then run:
+
+```bash
+npm run check:skills   # frontmatter and agents/openai.yaml
+npm run lint:md        # markdown style
+```
+
+CI runs both on every PR and on every push to `main`.
