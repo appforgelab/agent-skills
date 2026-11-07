@@ -61,10 +61,25 @@ before and after, with the scores.
     - **When to stop:** a number of rounds (default 1), or a target average
       score, such as 9.0, with a round limit (default 3).
     - **Mode:** improve (default) or rate only.
+    - **Rubric:** the default criteria, or `ui-design`'s design rubric, with
+      `DESIGN.md` identity.
     - **Issue:** an existing issue whose decisions the changes must respect.
 - **Example:** `/ui-council android, Settings signed in and signed out, until
   9.0`.
 - **Needs:** T3 Code, plus an emulator, a simulator or the browser preview.
+
+### ui-design
+
+The designer's half of the UI work: seven dimensions with anchors and named
+moves, and a `DESIGN.md` convention that keeps refined screens coherent with
+the rest of the app.
+
+- **Use when:** diagnosing or redesigning screens yourself, or scoring and
+  improving them with a designer's rubric instead of generic taste.
+- **With:** `ui-council`, which supplies the blind raters and the rounds.
+- **Example:** `/ui-council onboarding, ui-design rubric, until 9.0`, or
+  alone: `redesign Settings to the design language, DESIGN.md first`.
+- **Needs:** nothing on its own; with `ui-council`, what ui-council needs.
 
 ## Install
 

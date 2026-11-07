@@ -31,6 +31,16 @@ and offer the defaults:
 - **When to stop:** a number of improvement rounds (default 1), or a target
   average score such as 9.0 with a round limit (default 3).
 - **Mode:** improve (default), or rate only.
+- **Rubric:** the default five criteria, or `ui-design`'s design rubric —
+  seven dimensions with anchors, identity among them and scored against the
+  project's `DESIGN.md` — when the user asks for it. No `DESIGN.md` yet:
+  bootstrap it with the user before round 0
+  ([design doc](../ui-design/references/design-doc.md)). When a `DESIGN.md`
+  exists and the screens to improve are part of a larger app, also pick one
+  untouched screen as the identity reference before round 0: it joins every
+  round's shots and prompts, is never a target, and is not itself rated.
+  This rubric scores States on what the shots show, so include error, empty
+  and loading states among the captured states when possible.
 - **Issue:** optional. Its decisions are constraints, and the report goes
   there.
 
@@ -63,7 +73,10 @@ and offer the defaults:
    name as `search`). Prefer the newest full model, with reasoning effort
    `xhigh` where it's offered. Start every rater at once with T3's
    `delegate_task`, in `async` mode with a new `clientRequestId`. Use the
-   prompt in [rating prompt](references/rating-prompt.md), filled in. Then
+   prompt in [rating prompt](references/rating-prompt.md), filled in; with
+   the `ui-design` rubric, swap that prompt's scoring block for
+   [ui-design's rating rubric](../ui-design/references/rating-rubric.md) and
+   fill in its token summary. Then
    collect the results as T3 directs, without polling. If an answer ignores
    the format, rerun that rater once.
 4. **Check whether to stop.**
@@ -78,13 +91,17 @@ and offer the defaults:
      points.
    - Turn the user's calls into questions.
    - Drop points that are only taste, and note why.
-6. **Improve.** Make the round's changes, kept small. Run the project's checks
+6. **Improve.** Make the round's changes, kept small. With the `ui-design`
+   rubric, improve exactly as ui-design's [With
+   ui-council](../ui-design/SKILL.md#with-ui-council) section directs. Run
+   the project's checks
    and the tests that cover these screens. Build, capture the same states,
    and go back to step 3 with fresh raters.
 7. **Finish** ([report](references/report.md)):
    - If anything changed, commit. If no issue was given, open one that
      records what was done and why. Then open a PR that refers to the issue.
-     A run with no changes, such as rate only, skips this step.
+     A run with no changes skips this step — but a bootstrapped DESIGN.md is
+     a change.
    - Show the report page: the scores, each state before and after, the
      changes made in each round, and the questions.
    - Post the scores, the changes and the questions as a comment on the
