@@ -46,7 +46,7 @@ allowed.
    alone can be N/O, when no DESIGN.md exists.
 3. **Improve with named moves** from the design language, at most three per
    round, each tied to a dimension below the target when there is one,
-   otherwise to the lowest-scored. Express every value as a
+   otherwise to the lowest-scored dimensions. Express every value as a
    DESIGN.md token. A fix that needs a value the doc lacks is a doc proposal,
    not a one-off literal.
 4. **Keep the app coherent.** When improving a subset of screens, include an
@@ -61,10 +61,13 @@ summary from DESIGN.md; keep everything else about the council unchanged —
 blind raters, the same states, the same prompt every round. The token summary
 stays fixed for the whole run. Between rounds,
 act as the constrained improver: named moves only, at most
-three per round, each tied to a dimension below the target; tokens only; doc
-changes proposed for approval rather than applied — approved changes go into
+three per round, each tied to a dimension below the target when there is
+one, otherwise to the lowest-scored dimensions; tokens only — the theme
+code's tokens until a DESIGN.md exists; doc
+changes proposed for approval rather than applied — ask for approval when
+proposing; approved changes go into
 DESIGN.md in the Finish commit, and fixes that need them wait for the next
-run. When the targets are part
+run. When a DESIGN.md exists and the targets are part
 of a larger app, one untouched screen joins every round's shots — the same
 one from round 0 on — as the identity reference: never a target, and not
 itself rated. Untouched means not a target; fixes to shared components may

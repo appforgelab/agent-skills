@@ -9,8 +9,9 @@ round. The anchors below are the rater-facing digest of
 [the design language](design-language.md), which stays authoritative.
 Placeholders:
 
-- `{TOKENS}`: a few lines distilled from DESIGN.md — the palette roles, the
-  type roles, the base unit. Raters never get the whole doc. With no DESIGN.md
+- `{TOKENS}`: a few lines distilled from DESIGN.md — the palette roles with
+  their hex, the type roles with sizes, the base unit. Raters never get the
+  whole doc. With no DESIGN.md
   yet — the user declined the bootstrap — fill it with "none: this app has no
   design doc yet", and raters score Identity N/O.
 - `{REFERENCE}`: the reference screen's name, when ui-council picked one;
