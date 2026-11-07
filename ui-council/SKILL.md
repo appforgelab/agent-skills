@@ -31,6 +31,10 @@ and offer the defaults:
 - **When to stop:** a number of improvement rounds (default 1), or a target
   average score such as 9.0 with a round limit (default 3).
 - **Mode:** improve (default), or rate only.
+- **Rubric:** the default five criteria, or `ui-design`'s design rubric —
+  seven dimensions with anchors, plus identity against the project's
+  `DESIGN.md` — when the user asks for it. No `DESIGN.md` yet: bootstrap it
+  with the user before round 0.
 - **Issue:** optional. Its decisions are constraints, and the report goes
   there.
 
@@ -63,7 +67,9 @@ and offer the defaults:
    name as `search`). Prefer the newest full model, with reasoning effort
    `xhigh` where it's offered. Start every rater at once with T3's
    `delegate_task`, in `async` mode with a new `clientRequestId`. Use the
-   prompt in [rating prompt](references/rating-prompt.md), filled in. Then
+   prompt in [rating prompt](references/rating-prompt.md), filled in; with
+   the `ui-design` rubric, swap that prompt's scoring block for ui-design's
+   rating rubric and fill in its token summary. Then
    collect the results as T3 directs, without polling. If an answer ignores
    the format, rerun that rater once.
 4. **Check whether to stop.**
