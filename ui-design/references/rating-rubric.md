@@ -2,18 +2,20 @@
 
 For a ui-council run with this rubric, take ui-council's rating prompt (at
 `../ui-council/references/rating-prompt.md`, next to this skill) and swap its
-scoring block — from
-"Score each of the five criteria" to the end of its answer format — for the
-block below. Keep the rest word for word: the rules, the blindness, the same
-prompt every round. Placeholders:
+scoring block — from "Score each of the five criteria" through "Most
+important first. Keep each item short and concrete." — for the block below.
+Keep the rest word for word: the rules, the blindness, the same prompt every
+round. The anchors below are the rater-facing digest of
+[the design language](design-language.md), which stays authoritative.
+Placeholders:
 
 - `{TOKENS}`: a few lines distilled from DESIGN.md — the palette roles, the
-  type roles, the base unit. Raters never get the whole doc. When the project
-  has no DESIGN.md, drop dimension 7 and the identity paragraph; six
-  dimensions remain.
+  type roles, the base unit. Raters never get the whole doc. With no DESIGN.md
+  yet, fill it with "none: this app has no design doc yet", and raters score
+  Identity N/O.
 - `{REFERENCE}`: the reference screen's name, when an untouched screen is
-  included in the shots as the identity baseline. Otherwise drop that
-  paragraph.
+  included in the shots as the identity baseline; it is not itself rated.
+  Otherwise drop that paragraph.
 
 ````text
 Score each of the seven dimensions from 0 to 10, with one decimal (8.4 is
@@ -55,9 +57,11 @@ The app's visual identity, from its design doc:
 {TOKENS}
 
 The reference screen "{REFERENCE}", if listed in the shots, sets the app's
-identity: judge Identity against it and the summary above.
+identity: judge Identity against it and the summary above. It is a baseline,
+not one of the screens to rate or change.
 
-Answer in exactly this format:
+Answer in exactly this format, with N/O in place of a number for any
+dimension you can't observe:
 
 ```
 Score: N.N/10

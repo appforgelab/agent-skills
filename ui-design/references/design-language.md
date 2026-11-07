@@ -128,7 +128,7 @@ Moves:
 
 1. Reduce accent to the primary action family; let everything else recede.
 2. Assign each colour a role from DESIGN.md and purge the ones without one.
-3. Fix contrast by stepping the text tier darker, not by recolouring.
+3. Fix contrast by stepping to the stronger text tier, not by recolouring.
 4. Pair colour-coded meaning with an icon or a word.
 
 ## 5. States

@@ -31,10 +31,13 @@ An existing app gets its de facto system recorded; a new project chooses one.
 
 1. Collect evidence: screenshots across the app, not only the screens to
    improve, and the theme code — styles, tokens, theme definitions.
-2. Derive the de facto system: the values that repeat are the system. Count
-   them; the modal gap is the spacing base, the recurring sizes are the scale.
+2. Derive the de facto system: the values that repeat are the system. The
+   spacing base is the largest unit the recurring gaps are all multiples of —
+   usually 4 or 8, not the most common gap. The recurring sizes are the
+   scale.
 3. Write the proposal as tables, and flag every inconsistency found — two
-   primary blues, three card paddings — as a decision for the user.
+   primary blues, three card paddings, gaps that aren't multiples of the
+   base — as a decision for the user.
 
 **New project — choose it:**
 

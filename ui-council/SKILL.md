@@ -34,7 +34,8 @@ and offer the defaults:
 - **Rubric:** the default five criteria, or `ui-design`'s design rubric —
   seven dimensions with anchors, plus identity against the project's
   `DESIGN.md` — when the user asks for it. No `DESIGN.md` yet: bootstrap it
-  with the user before round 0.
+  with the user before round 0
+  ([design doc](../ui-design/references/design-doc.md)).
 - **Issue:** optional. Its decisions are constraints, and the report goes
   there.
 
@@ -68,8 +69,9 @@ and offer the defaults:
    `xhigh` where it's offered. Start every rater at once with T3's
    `delegate_task`, in `async` mode with a new `clientRequestId`. Use the
    prompt in [rating prompt](references/rating-prompt.md), filled in; with
-   the `ui-design` rubric, swap that prompt's scoring block for ui-design's
-   rating rubric and fill in its token summary. Then
+   the `ui-design` rubric, swap that prompt's scoring block for
+   [ui-design's rating rubric](../ui-design/references/rating-rubric.md) and
+   fill in its token summary. Then
    collect the results as T3 directs, without polling. If an answer ignores
    the format, rerun that rater once.
 4. **Check whether to stop.**
