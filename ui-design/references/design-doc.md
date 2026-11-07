@@ -10,7 +10,8 @@ library; code stays in code.
   and one line for what the app is not.
 - **Palette:** each colour by role and value — action, action content, surface
   tiers, text tiers, border, success, warning, error, info. Always record
-  the hex; add the theme token's name where there is one.
+  the hex, per theme when the app has more than one (light and dark each);
+  add the theme token's name where there is one.
 - **Type:** the families; the scale as roles (caption, body, title, display)
   with size, weight and line-height each.
 - **Spacing:** the base unit; the inset per container level; gutters; the
@@ -69,7 +70,8 @@ An existing app gets its de facto system recorded; a new project chooses one.
 ## Use
 
 - **Raters** get a token summary with values: the palette roles with their
-  hex, the type roles with sizes, the base unit — a few lines distilled from
+  hex (both themes' when there are two), the type roles with sizes, the base
+  unit — a few lines distilled from
   the doc, never the whole file.
 - **Improvers** express every fix in tokens. A needed value that no token
   covers triggers a proposal, not a literal.

@@ -92,10 +92,9 @@ and offer the defaults:
    - Turn the user's calls into questions.
    - Drop points that are only taste, and note why.
 6. **Improve.** Make the round's changes, kept small. With the `ui-design`
-   rubric, improve as ui-design's [With
-   ui-council](../ui-design/SKILL.md#with-ui-council) section directs:
-   named moves only, at most three per round; tokens only; doc changes
-   proposed; reference screen never a target. Run the project's checks
+   rubric, improve exactly as ui-design's [With
+   ui-council](../ui-design/SKILL.md#with-ui-council) section directs. Run
+   the project's checks
    and the tests that cover these screens. Build, capture the same states,
    and go back to step 3 with fresh raters.
 7. **Finish** ([report](references/report.md)):

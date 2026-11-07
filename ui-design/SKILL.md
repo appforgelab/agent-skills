@@ -65,10 +65,12 @@ three per round, each tied to a dimension below the target when there is
 one, otherwise to the lowest-scored dimensions; tokens only — the theme
 code's tokens until a DESIGN.md exists; doc
 changes proposed for approval rather than applied — ask for approval when
-proposing; approved changes go into
-DESIGN.md in the Finish commit, and fixes that need them wait for the next
-run. When a DESIGN.md exists and the targets are part
+proposing and keep working while it waits; approved changes go into
+DESIGN.md in the Finish commit — unless the user declined the bootstrap, in
+which case they wait for a full one — and fixes that need them wait for the
+next run. When a DESIGN.md exists and the targets are part
 of a larger app, one untouched screen joins every round's shots — the same
 one from round 0 on — as the identity reference: never a target, and not
 itself rated. Untouched means not a target; fixes to shared components may
-change how it looks, and that is fine.
+change how it looks, and that is fine. Copy that users will see stays with
+the user, per the council's rules: proposed wording becomes a question.

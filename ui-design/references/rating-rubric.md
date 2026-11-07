@@ -10,7 +10,8 @@ round. The anchors below are the rater-facing digest of
 Placeholders:
 
 - `{TOKENS}`: a few lines distilled from DESIGN.md — the palette roles with
-  their hex, the type roles with sizes, the base unit. Raters never get the
+  their hex (both themes' when there are two), the type roles with sizes, the
+  base unit. Raters never get the
   whole doc. With no DESIGN.md
   yet — the user declined the bootstrap — fill it with "none: this app has no
   design doc yet", and raters score Identity N/O.
@@ -42,7 +43,8 @@ broken, not just bad:
 6. Layout — 9: deliberate whitespace, stable regions across screens,
    survives large text. 6: slightly cramped, or one region shifts between
    screens. 3: a wall of content, clipping at large text.
-7. Identity — 9: every value traceable to the token summary below, and,
+7. Identity — 9: every value of the kinds the summary lists traceable to
+   it, and,
    if a reference screen is given, the screen sits beside it as one app. 6:
    one or two off-token values. 3: reads like a different app.
 
