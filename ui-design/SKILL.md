@@ -41,8 +41,8 @@ allowed.
    user choose.
 2. **Diagnose before changing.** Score the dimensions per screen
    ([design language](references/design-language.md)), each score citing what
-   the evidence shows. A dimension the evidence can't show, such as motion in
-   a still, is "not observable" — never a guess.
+   the evidence shows. A dimension the evidence can't show, such as pressed
+   or hover states in a still, is "not observable" — never a guess.
 3. **Improve with named moves** from the design language, at most three per
    round, each tied to a dimension scored low. Express every value as a
    DESIGN.md token. A fix that needs a value the doc lacks is a doc proposal,
@@ -58,4 +58,5 @@ Give the raters the [rating rubric](references/rating-rubric.md) and a token
 summary from DESIGN.md; keep everything else about the council unchanged —
 blind raters, the same states, the same prompt every round. Between rounds,
 act as the constrained improver: named moves only, tokens only, doc changes
-proposed for approval rather than applied.
+proposed for approval rather than applied. Capture one untouched screen as
+the identity reference in every round's shots, and leave it unchanged.

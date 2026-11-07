@@ -1,8 +1,8 @@
 # Rating rubric
 
 For a ui-council run with this rubric, take ui-council's rating prompt (at
-`../ui-council/references/rating-prompt.md`, next to this skill) and swap its
-scoring block — from "Score each of the five criteria" through "Most
+`../../ui-council/references/rating-prompt.md`, next to this skill) and swap
+its scoring block — from "Score each of the five criteria" through "Most
 important first. Keep each item short and concrete." — for the block below.
 Keep the rest word for word: the rules, the blindness, the same prompt every
 round. The anchors below are the rater-facing digest of
@@ -11,8 +11,8 @@ Placeholders:
 
 - `{TOKENS}`: a few lines distilled from DESIGN.md — the palette roles, the
   type roles, the base unit. Raters never get the whole doc. With no DESIGN.md
-  yet, fill it with "none: this app has no design doc yet", and raters score
-  Identity N/O.
+  yet — the user declined the bootstrap — fill it with "none: this app has no
+  design doc yet", and raters score Identity N/O.
 - `{REFERENCE}`: the reference screen's name, when an untouched screen is
   included in the shots as the identity baseline; it is not itself rated.
   Otherwise drop that paragraph.
@@ -42,12 +42,14 @@ broken, not just bad:
 6. Layout — 9: deliberate whitespace, stable regions across screens,
    survives large text. 6: slightly cramped, or one region shifts between
    screens. 3: a wall of content, clipping at large text.
-7. Identity — 9: every value traceable to the token summary below, and the
-   screen sits beside the reference screen as one app. 6: one or two
-   off-token values. 3: reads like a different app.
+7. Identity — 9: every value traceable to the token summary below, and,
+   if a reference screen is given, the screen sits beside it as one app. 6:
+   one or two off-token values. 3: reads like a different app.
 
-If the images cannot show a dimension — motion in a still, for example —
-give it "N/O" instead of a number and leave it out of your average. Identity
+If the images cannot show a dimension — pressed or hover states in a still,
+for example — give it "N/O" instead of a number and leave it out of your
+average. A dimension the images show only partly is scored on the visible
+part, not marked N/O. Identity
 is N/O when no token summary is given. Every point you take off must be
 explained by an item in your list. The overall score is the average of the
 scored dimensions, rounded to one decimal.
@@ -58,7 +60,7 @@ The app's visual identity, from its design doc:
 
 The reference screen "{REFERENCE}", if listed in the shots, sets the app's
 identity: judge Identity against it and the summary above. It is a baseline,
-not one of the screens to rate or change.
+not one of the screens to rate.
 
 Answer in exactly this format, with N/O in place of a number for any
 dimension you can't observe:

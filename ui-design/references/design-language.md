@@ -10,8 +10,9 @@ Never take a structural move to dodge a cheap one.
   below 2 is broken, not just bad.
 - Every deduction cites something visible in the evidence. A score without a
   cited reason doesn't count.
-- If the evidence can't show a dimension — motion in a still, focus rings in a
-  static shot — score it "N/O" (not observable) and leave it out of the
+- If the evidence can't show a dimension — pressed or hover states in a
+  still, focus rings in a static shot — score it "N/O" (not observable) and
+  leave it out of the
   average. Ask for the missing evidence instead of guessing.
 
 ## 1. Hierarchy
