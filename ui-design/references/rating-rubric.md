@@ -1,7 +1,8 @@
 # Rating rubric
 
-For a ui-council run with this rubric, take ui-council's rating prompt (in
-`ui-council/references/rating-prompt.md`) and swap its scoring block — from
+For a ui-council run with this rubric, take ui-council's rating prompt (at
+`../ui-council/references/rating-prompt.md`, next to this skill) and swap its
+scoring block — from
 "Score each of the five criteria" to the end of its answer format — for the
 block below. Keep the rest word for word: the rules, the blindness, the same
 prompt every round. Placeholders:
