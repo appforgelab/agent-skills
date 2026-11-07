@@ -34,8 +34,8 @@ An existing app gets its de facto system recorded; a new project chooses one.
 2. Derive the de facto system: the values that repeat are the system. The
    spacing base is 4 or 8: the larger of the two that nearly all recurring
    gaps are multiples of. A repeated gap that fits neither, such as a 6 or a
-   10, is a decision to flag, not a reason to shrink the base. The recurring
-   sizes are the scale.
+   10, is a decision to flag, not a reason to shrink the base; if most gaps
+   fit neither, flag the base itself. The recurring sizes are the scale.
 3. Write the proposal as tables, and flag every inconsistency found — two
    primary blues, three card paddings, gaps off the base — as a decision for
    the user.

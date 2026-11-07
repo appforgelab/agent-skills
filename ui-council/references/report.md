@@ -11,7 +11,8 @@ The page has, in this order:
 1. **Scores:** a table with one row per round (round 0 is "Before") and one
    column per rater, plus an "Average" column. Each cell holds one number.
 2. **Before and after:** for each state, the round 0 shot and the final shot
-   side by side, each with a caption.
+   side by side, each with a caption. Leave out the identity reference
+   screen, when there is one: it is not a target.
 3. **What changed:** short bullets for each round.
 4. **Not acted on:** each skipped point, with the reason (a decision, taste,
    or out of scope).

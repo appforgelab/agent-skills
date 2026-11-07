@@ -13,9 +13,10 @@ Placeholders:
   type roles, the base unit. Raters never get the whole doc. With no DESIGN.md
   yet — the user declined the bootstrap — fill it with "none: this app has no
   design doc yet", and raters score Identity N/O.
-- `{REFERENCE}`: the reference screen's name, when an untouched screen is
-  included in the shots as the identity baseline; it is not itself rated.
-  Otherwise drop that paragraph.
+- `{REFERENCE}`: the reference screen's name, when the screens to improve
+  are part of a larger app and one untouched screen joins the shots as the
+  identity baseline — chosen before round 0, the same every round, never a
+  target, not itself rated. Otherwise drop that paragraph.
 
 ````text
 Score each of the seven dimensions from 0 to 10, with one decimal (8.4 is
@@ -46,13 +47,12 @@ broken, not just bad:
    if a reference screen is given, the screen sits beside it as one app. 6:
    one or two off-token values. 3: reads like a different app.
 
-If the images cannot show a dimension — pressed or hover states in a still,
-for example — give it "N/O" instead of a number and leave it out of your
-average. A dimension the images show only partly is scored on the visible
-part, not marked N/O. Identity
-is N/O when no token summary is given. Every point you take off must be
-explained by an item in your list. The overall score is the average of the
-scored dimensions, rounded to one decimal.
+Score the six screen dimensions on what the images show; what they cannot
+show — pressed or hover states, focus rings — becomes an item in your list,
+not a missing score. Identity alone may be "N/O": when no token summary is
+given, score it N/O and leave it out of your average. Every point you take
+off must be explained by an item in your list. The overall score is the
+average of the scored dimensions, rounded to one decimal.
 
 The app's visual identity, from its design doc:
 
@@ -62,8 +62,8 @@ The reference screen "{REFERENCE}", if listed in the shots, sets the app's
 identity: judge Identity against it and the summary above. It is a baseline,
 not one of the screens to rate.
 
-Answer in exactly this format, with N/O in place of a number for any
-dimension you can't observe:
+Answer in exactly this format (Identity may be N/O when there is no token
+summary):
 
 ```
 Score: N.N/10

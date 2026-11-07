@@ -10,10 +10,11 @@ Never take a structural move to dodge a cheap one.
   below 2 is broken, not just bad.
 - Every deduction cites something visible in the evidence. A score without a
   cited reason doesn't count.
-- If the evidence can't show a dimension — pressed or hover states in a
-  still, focus rings in a static shot — score it "N/O" (not observable) and
-  leave it out of the
-  average. Ask for the missing evidence instead of guessing.
+- Score the six screen dimensions on what the evidence shows. What it can't
+  show — pressed or hover states in a still, focus rings in a static shot —
+  becomes a named gap, not a missing score; ask for the missing evidence
+  instead of guessing. Identity alone can be N/O: without a DESIGN.md there
+  is nothing to conform to.
 
 ## 1. Hierarchy
 
@@ -197,13 +198,14 @@ Score this dimension only when a DESIGN.md exists; otherwise N/O.
 Ask:
 
 - Which values on this screen are not tokens: sizes, gaps, colours, radii?
-- Would this screen sit beside the reference screen as one app?
+- Would this screen sit beside the app's other screens as one app?
 - Do the same constructs — headers, lists, buttons — take the same patterns as
-  on the reference screen?
+  on the app's other screens?
 
 Anchors:
 
-- **9:** everything traceable; sits naturally beside the reference screen.
+- **9:** everything traceable; sits naturally beside the app's other
+  screens.
 - **6:** one or two off-token values.
 - **3:** reads like a different app.
 
@@ -212,4 +214,4 @@ Moves:
 1. Replace off-token values with the nearest token.
 2. If the nearest token is wrong, propose a DESIGN.md change rather than
    working around it.
-3. Align recurring constructs with the reference screen's patterns.
+3. Align recurring constructs with the patterns on the app's other screens.
