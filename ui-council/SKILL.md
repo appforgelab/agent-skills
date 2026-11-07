@@ -32,13 +32,13 @@ and offer the defaults:
   average score such as 9.0 with a round limit (default 3).
 - **Mode:** improve (default), or rate only.
 - **Rubric:** the default five criteria, or `ui-design`'s design rubric —
-  seven dimensions with anchors, plus identity against the project's
-  `DESIGN.md` — when the user asks for it. No `DESIGN.md` yet: bootstrap it
-  with the user before round 0
-  ([design doc](../ui-design/references/design-doc.md)). When the screens to
-  improve are part of a larger app, also pick one untouched screen as the
-  identity reference before round 0: it joins every round's shots and
-  prompts, is never a target, and is not itself rated.
+  seven dimensions with anchors, identity among them and scored against the
+  project's `DESIGN.md` — when the user asks for it. No `DESIGN.md` yet:
+  bootstrap it with the user before round 0
+  ([design doc](../ui-design/references/design-doc.md)). When a `DESIGN.md`
+  exists and the screens to improve are part of a larger app, also pick one
+  untouched screen as the identity reference before round 0: it joins every
+  round's shots and prompts, is never a target, and is not itself rated.
 - **Issue:** optional. Its decisions are constraints, and the report goes
   there.
 
@@ -91,10 +91,10 @@ and offer the defaults:
    - Drop points that are only taste, and note why.
 6. **Improve.** Make the round's changes, kept small. With the `ui-design`
    rubric, improve as ui-design's [With
-   ui-council](../ui-design/SKILL.md) section directs: named moves only, at
-   most three per round, each tied to a dimension scored low; tokens only;
-   doc changes proposed; reference screen never a target. Run the
-   project's checks
+   ui-council](../ui-design/SKILL.md#with-ui-council) section directs:
+   named moves only, at most three per round, each tied to a dimension
+   below the target; tokens only; doc changes proposed; reference screen
+   never a target. Run the project's checks
    and the tests that cover these screens. Build, capture the same states,
    and go back to step 3 with fresh raters.
 7. **Finish** ([report](references/report.md)):

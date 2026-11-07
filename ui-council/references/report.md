@@ -15,7 +15,7 @@ The page has, in this order:
    screen, when there is one: it is not a target.
 3. **What changed:** short bullets for each round.
 4. **Not acted on:** each skipped point, with the reason (a decision, taste,
-   or out of scope).
+   out of scope, or not shown in the evidence).
 5. **Questions for you:** the calls left for the user.
 
 Layout:

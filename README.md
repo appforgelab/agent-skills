@@ -61,6 +61,8 @@ before and after, with the scores.
     - **When to stop:** a number of rounds (default 1), or a target average
       score, such as 9.0, with a round limit (default 3).
     - **Mode:** improve (default) or rate only.
+    - **Rubric:** the default criteria, or `ui-design`'s design rubric, with
+      `DESIGN.md` identity.
     - **Issue:** an existing issue whose decisions the changes must respect.
 - **Example:** `/ui-council android, Settings signed in and signed out, until
   9.0`.

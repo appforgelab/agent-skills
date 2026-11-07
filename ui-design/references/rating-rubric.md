@@ -13,10 +13,8 @@ Placeholders:
   type roles, the base unit. Raters never get the whole doc. With no DESIGN.md
   yet — the user declined the bootstrap — fill it with "none: this app has no
   design doc yet", and raters score Identity N/O.
-- `{REFERENCE}`: the reference screen's name, when the screens to improve
-  are part of a larger app and one untouched screen joins the shots as the
-  identity baseline — chosen before round 0, the same every round, never a
-  target, not itself rated. Otherwise drop that paragraph.
+- `{REFERENCE}`: the reference screen's name, when ui-council picked one;
+  otherwise drop that paragraph.
 
 ````text
 Score each of the seven dimensions from 0 to 10, with one decimal (8.4 is
@@ -47,12 +45,12 @@ broken, not just bad:
    if a reference screen is given, the screen sits beside it as one app. 6:
    one or two off-token values. 3: reads like a different app.
 
-Score the six screen dimensions on what the images show; what they cannot
-show — pressed or hover states, focus rings — becomes an item in your list,
-not a missing score. Identity alone may be "N/O": when no token summary is
-given, score it N/O and leave it out of your average. Every point you take
-off must be explained by an item in your list. The overall score is the
-average of the scored dimensions, rounded to one decimal.
+Score the six screen dimensions on what the images show. What the images
+cannot show — pressed or hover states, focus rings — becomes an item in your
+list, marked "not shown", and costs no points; every point you take off must
+cite something the images show. Identity alone may be "N/O": when no token
+summary is given, score it N/O and leave it out of your average. The overall
+score is the average of the scored dimensions, rounded to one decimal.
 
 The app's visual identity, from its design doc:
 
