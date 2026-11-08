@@ -29,12 +29,14 @@ them for composition; they never replace them for values.
 Runs in the page, returns JSON. Selector lists are tried in list order —
 a combined selector would return the first match in document order, which on
 a real site is the cookie bar. Page chrome — headers, navs, footers, dialogs,
-including cookie consent built as a `div[role=dialog]` — is skipped, and a
-nav's own CTA with it, on purpose: the body repeats the primary CTA on most
-sites. The CTA itself is found by how it looks, not by class names:
-utility-class and hashed-class sites never carry `cta`/`btn`/`button` in
-their classes. Every picked element carries its `tag` and first words of
-`text`, so a misread is visible in the JSON instead of poisoning the table.
+including cookie consent built as a `div[role=dialog]` — is skipped, except
+the one element of it that holds the h1, so masthead heroes still count. The
+CTA is found anchored on the h1 and by how it looks, not by class names or
+document order: announcement pills and navbars sit above the h1, utility-class
+and hashed-class sites never carry `cta`/`btn`/`button` in their classes, and
+DOM order is not visual order. Every picked element carries its `tag` and
+first words of `text`, so a misread is visible in the JSON instead of
+poisoning the table.
 
 ```js
 (() => {
@@ -93,24 +95,30 @@ their classes. Every picked element carries its `tag` and first words of
     };
   };
   const h1 = q(['h1']) || q(['h1'], true); // masthead heroes: h1 in the header
-  // The CTA, by appearance: it paints its own background, carries short
-  // text, is button-sized, is nowhere near full width (the cap keeps
-  // banner rows out), and is not parked off-screen above or beside the
-  // viewport, where skip links live — below the fold is fine, hero CTAs
-  // can sit low.
-  let btn = null;
+  // The CTA: the nearest painted, button-sized element at or below the h1,
+  // not the first one in the document — announcement pills sit above the
+  // h1, navbars above that, and DOM order is not visual order. The h1's own
+  // chrome ancestor is exempt, so masthead heroes (CTA beside the h1 in the
+  // header) still count; fixed-position widgets and anything parked
+  // off-screen above or beside the viewport stay out. Candidates within 8px
+  // of the best top count as one row; the first in DOM order wins it.
+  const h1Chrome = h1 && h1.closest(CHROME);
+  const h1Top = h1 ? h1.getBoundingClientRect().top : -Infinity;
+  let btn = null, bestTop = Infinity;
   for (const el of document.querySelectorAll('a, button, [role=button]')) {
-    if (el.closest(CHROME)) continue;
+    const c = el.closest(CHROME);
+    if (c && c !== h1Chrome) continue;
     const s = getComputedStyle(el);
+    if (s.position === 'fixed') continue;
     const r = el.getBoundingClientRect();
-    if (r.bottom <= 0 || r.right <= 0 || r.left >= window.innerWidth) continue;
+    if (r.top < h1Top - 1 || r.bottom <= 0 || r.right <= 0
+        || r.left >= window.innerWidth) continue;
     const text = (el.textContent || '').trim().replace(/\s+/g, ' ');
     if (!text || text.length > 40) continue;
-    if (r.height < 32 || r.height > 80) continue;
+    if (r.height < 32 || r.height > 96) continue;
     if (r.width < 40 || r.width > window.innerWidth * 0.5) continue;
     if (!hexOf(s.backgroundColor) && s.backgroundImage === 'none') continue;
-    btn = el;
-    break;
+    if (r.top < bestTop - 8) { bestTop = r.top; btn = el; }
   }
   // The hero block: the first ancestor at or near the viewport's width that
   // is not taller than about 1.5 viewports (a whole-page wrapper is),
@@ -141,6 +149,17 @@ their classes. Every picked element carries its `tag` and first words of
     if (!isFinite(mw) || mw >= window.innerWidth || mw < 480) continue;
     if (r.width < mw - 1) continue;
     if (mw > wrapMax) { wrapMax = mw; wrap = el; }
+  }
+  // Guard: a wrap at or near the viewport's width is a page shell wearing
+  // a max-width just under the viewport (full-bleed in practice), and one
+  // far narrower than the hero is a text column inside it, not the
+  // container. Either way the container is unmeasured, not misread.
+  if (wrap) {
+    const wr = wrap.getBoundingClientRect();
+    if (wr.width >= window.innerWidth * 0.95
+        || (hero && wr.width < hero.getBoundingClientRect().width * 0.5)) {
+      wrap = null;
+    }
   }
   // Sections first; main > div only when the page has almost no <section>.
   // The outermost of nested sections wins, so wrappers do not swallow rows.
@@ -177,10 +196,15 @@ comparability across sites, not exhaustive scraping.
 - `h1` / `h2` / `p` — display and body type: families, scale, weights,
   tracking. Three sites sharing a family is a convention; one alone is a
   choice. `p` is the lede or first body paragraph: on sites whose hero sits
-  inside `main`, it is the hero lede — compare like with like.
-- `btn` — CTA treatment: size, weight, radius, color on bg. Chosen by a
-  rough appearance rule — check `tag` and `text` before trusting the row;
-  when they are plainly not the CTA, note the misread instead.
+  inside `main`, it is the hero lede — compare like with like. On masthead
+  heroes the lede lives in the header and is skipped with the rest of the
+  chrome, so `p` picks a later paragraph.
+- `btn` — CTA treatment: size, weight, radius, color on bg. Chosen as the
+  nearest painted, button-sized element at or below the h1 — check `tag` and
+  `text` before trusting the row. A product-demo tab or a menu can sit
+  between the h1 and the real CTA and win the row; on a page with no h1 the
+  anchor is the top of the page and the rule is weaker. When `tag` and
+  `text` are plainly not the CTA, note the misread instead of trusting it.
 - `caps` / `bgImage` — slop confirmation without screenshots: all-caps
   tracked labels, and gradient or image backdrops. They can confirm a
   suspect, never clear one — eyebrow labels and blurred blobs usually live
@@ -189,15 +213,17 @@ comparability across sites, not exhaustive scraping.
   an alpha suffix (as in `#ffffff0a`) marks a translucent layer over whatever
   sits behind it. `null` means nothing paints there; the browser default
   shows through.
-- `secs[].pad` — section rhythm range. Padding that reads `0/0` usually sits
-  on an inner wrapper — note it rather than chasing it.
+- `secs[].pad` — section rhythm range. On roughly a quarter of real sites
+  every row reads `0/0` — the padding sits on an inner wrapper, and the
+  rhythm is a named gap. Note it rather than chasing it.
 - `docH` — page length: how much argument the site makes. A baseline a
   fraction of the references' length is itself a finding. Sites with
   transform-based smooth scrolling can report the viewport height instead —
   when `docH` equals the viewport exactly, cross-check before trusting it.
-- `hero` / `wrap` — hero proportions and the content container's width. On
-  the mobile pass, `wrap` is always null by construction — the filter needs
-  a desktop viewport; do not read it as no container.
+- `hero` / `wrap` — hero proportions and the content container's width. A
+  `wrap` null after the guard (page shell or text column) means unmeasured,
+  not absent. On the mobile pass, `wrap` is always null by construction —
+  the filter needs a desktop viewport; do not read it as no container.
 
 ## Screenshots — the visuals ladder
 

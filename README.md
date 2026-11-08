@@ -50,8 +50,9 @@ pushes back until the reviewer approves.
 
 Finds the comparable websites before a product site is designed: reads the
 repo, asks a short brief, searches the category and — except at scan depth —
-one adjacent industry, filters template slop and stale listicles, and hands over an evidence-only
-candidates doc — ending with the user picking three to five sites.
+one adjacent industry, filters template slop and stale listicles, and hands
+over an evidence-only candidates doc — ending with the user picking three to
+five sites.
 
 - **Use when:** a marketing or product website is about to be built or
   redesigned, and the research should come before the design.
