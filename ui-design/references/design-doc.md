@@ -51,8 +51,10 @@ An existing app gets its de facto system recorded; a new project chooses one.
 **Either way:**
 
 1. The user settles the flags. Record the choice, not the debate.
-2. Save as `DESIGN.md` at the repo root, or where the project keeps such
-   docs, and link it from the project's agent instructions if it has them.
+2. Save as `DESIGN.md` where the project keeps its documentation, alongside
+   the other docs — at the repo root only when no such place exists — and
+   link it from the project's agent instructions if it has them, so it is
+   found wherever it sits.
 3. On a new project, once the first real screens exist, re-derive from them
    and correct the doc: choices made before anything was built don't keep
    their seats automatically.
