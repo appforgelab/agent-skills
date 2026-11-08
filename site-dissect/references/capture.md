@@ -14,6 +14,9 @@ them for composition; they never replace them for values.
 - **Let the page settle** before probing: webfont swaps and late layout shift
   both change computed values. Probe after load has finished, and prefer a
   tool that waits for network idle.
+- **Scroll back to the top before probing.** The CTA rule measures element
+  positions from the current scroll: a page probed after a scroll-to-bottom
+  pass (lazy loading, stitched screenshots) yields a different CTA.
 - **Pass the probe as an expression string** when the evaluation tool accepts
   both a function and an expression; on some stacks the function form is
   rejected. If the tool only takes functions, wrap the same body.
@@ -29,11 +32,13 @@ them for composition; they never replace them for values.
 Runs in the page, returns JSON. Selector lists are tried in list order —
 a combined selector would return the first match in document order, which on
 a real site is the cookie bar. Page chrome — headers, navs, footers, dialogs,
-including cookie consent built as a `div[role=dialog]` — is skipped, except
-the one element of it that holds the h1, so masthead heroes still count. The
-CTA is found anchored on the h1 and by how it looks, not by class names or
-document order: announcement pills and navbars sit above the h1, utility-class
-and hashed-class sites never carry `cta`/`btn`/`button` in their classes, and
+including cookie consent built as a `div[role=dialog]` — is skipped. Only
+the h1 and CTA searches reach into the chrome element that holds the h1, so
+a masthead hero still yields its heading and its CTA; everything else —
+`h2`, `p`, `wrap`, `secs` — measures body content only. The CTA is found
+anchored on the h1 and by how it looks, not by class names or document
+order: announcement pills and navbars sit above the h1, utility-class and
+hashed-class sites never carry `cta`/`btn`/`button` in their classes, and
 DOM order is not visual order. Every picked element carries its `tag` and
 first words of `text`, so a misread is visible in the JSON instead of
 poisoning the table.
@@ -205,6 +210,9 @@ comparability across sites, not exhaustive scraping.
   between the h1 and the real CTA and win the row; on a page with no h1 the
   anchor is the top of the page and the rule is weaker. When `tag` and
   `text` are plainly not the CTA, note the misread instead of trusting it.
+  On the mobile pass the half-width cap rejects full-width CTAs, so `btn`
+  can misread or return null — trust the project's own code over the
+  mobile pick.
 - `caps` / `bgImage` — slop confirmation without screenshots: all-caps
   tracked labels, and gradient or image backdrops. They can confirm a
   suspect, never clear one — eyebrow labels and blurred blobs usually live
@@ -215,7 +223,9 @@ comparability across sites, not exhaustive scraping.
   shows through.
 - `secs[].pad` — section rhythm range. On roughly a quarter of real sites
   every row reads `0/0` — the padding sits on an inner wrapper, and the
-  rhythm is a named gap. Note it rather than chasing it.
+  rhythm is a named gap. An empty `secs` means the page exposes neither
+  `section` nor `main > div`; the rhythm is unmeasured either way. Note it
+  rather than chasing it.
 - `docH` — page length: how much argument the site makes. A baseline a
   fraction of the references' length is itself a finding. Sites with
   transform-based smooth scrolling can report the viewport height instead —
