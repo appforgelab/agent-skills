@@ -24,9 +24,21 @@ library; code stays in code.
 Keep it to what a new designer must be told. Where a section has no answer
 yet, write "undecided" rather than inventing one.
 
+## Surfaces
+
+A project with more than one surface — an app and a website — tiers the doc:
+a `Foundation` section for what every surface shares, then one section per
+surface. A surface section extends the foundation, never contradicts it.
+Raters, improvers and agents work from the foundation plus their own
+surface's section; a foundation change is a proposal checked against every
+surface before approval.
+
 ## Bootstrap
 
 An existing app gets its de facto system recorded; a new project chooses one.
+Before either path, search the repo for a `DESIGN.md` that already exists —
+it may live anywhere, not only at the root — so a second one is never
+bootstrapped beside the first.
 
 **Existing app — derive it:**
 
@@ -51,8 +63,10 @@ An existing app gets its de facto system recorded; a new project chooses one.
 **Either way:**
 
 1. The user settles the flags. Record the choice, not the debate.
-2. Save as `DESIGN.md` at the repo root, or where the project keeps such
-   docs, and link it from the project's agent instructions if it has them.
+2. Save as `DESIGN.md` where the project keeps its documentation, alongside
+   the other docs — at the repo root only when no such place exists — and
+   link it from the project's agent instructions if it has them, so it is
+   found wherever it sits.
 3. On a new project, once the first real screens exist, re-derive from them
    and correct the doc: choices made before anything was built don't keep
    their seats automatically.

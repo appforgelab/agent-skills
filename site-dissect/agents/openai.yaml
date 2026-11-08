@@ -1,0 +1,3 @@
+interface:
+  display_name: "Site Dissect"
+  short_description: "Measured dissection of picked sites into a design direction"

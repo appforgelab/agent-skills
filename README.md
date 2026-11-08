@@ -46,6 +46,39 @@ pushes back until the reviewer approves.
   `/pr-review-loop opus`.
 - **Needs:** T3 Code.
 
+### site-discovery
+
+Finds the comparable websites before a product site is designed: reads the
+repo, asks a short brief, searches the category and — except at scan depth —
+one adjacent industry, filters template slop and stale listicles, and hands
+over an evidence-only candidates doc — ending with the user picking three to
+five sites.
+
+- **Use when:** a marketing or product website is about to be built or
+  redesigned, and the research should come before the design.
+- **Parameters:** depth: `scan`, `standard` (default) or `deep`; any number
+  in the depth table can be overridden inline.
+- **With:** `site-dissect`, which measures the picked sites and proposes the
+  direction.
+- **Needs:** web search and page fetching.
+
+### site-dissect
+
+Dissects comparable websites by measurement, not taste: computed styles —
+type scale, palette, section rhythm, page length — from each picked site and
+the current one, a three-layer synthesis into keep/change/reject lists, and
+two or three anti-convergent directions ending in a tiered `DESIGN.md`
+proposal, approval-gated.
+
+- **Use when:** the candidate sites are chosen — by `site-discovery` or named
+  by the user — and the direction must be grounded in measurement.
+- **Parameters:** the sites; nothing else.
+- **With:** `ui-design`, whose DESIGN.md conventions the proposal follows and
+  which implements it; `ui-council` for before/after scoring when a
+  screenshot path exists.
+- **Needs:** a browser that can run a script on the page; degrades to
+  fetched text.
+
 ### ui-council
 
 A panel of models rates screenshots of an app's screens without knowing what
