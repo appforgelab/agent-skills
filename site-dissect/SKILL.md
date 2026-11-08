@@ -27,23 +27,25 @@ the knife and ends with a direction the user approves.
   project's docs folder — with the user's picks and the brief. Read it before
   anything else; the brief's anchor drives the directions.
 - **Standalone** (the user named the sites): look for the candidates doc
-  anyway; if there is none, ask the anchor question and the brief fields
-  site-discovery records — promise, what bothers the user, direction lean,
-  motion, content scope — in one round before measuring.
+  anyway; if there is none, ask the brief questions site-discovery records —
+  anchor first, then promise, what bothers the user, direction lean, motion,
+  content scope — in one round before measuring.
 - **The baseline:** the current site. When none exists yet, the stand-in the
   candidates doc recorded; with neither, say the table carries no baseline
   row and let the references carry the argument alone.
 
 ## Workflow
 
-1. **Start from the app, not the references.** Before measuring any outside
-   site, read the project's own theme and token code — the app's theme files,
-   CSS custom properties, Tailwind config, whatever holds values. The brand
-   usually already exists; a website that contradicts it is drift, not
-   identity. Derive foundation candidates (palette, type voice, shape) from
-   the code and name the file they came from. Greenfield with no code to
-   read: say so; the foundation then comes from the references plus the
-   user's choice.
+1. **Start from the project, not the references.** Search the repo for an
+   approved DESIGN.md first; when one exists it is the foundation — read it,
+   and check the theme and token code only for drift against it, never to
+   re-derive settled choices. With none, read the project's own theme and
+   token code — the app's theme files, CSS custom properties, Tailwind
+   config, whatever holds values. The brand usually already exists; a
+   website that contradicts it is drift, not identity. Derive foundation
+   candidates (palette, type voice, shape) from the code and name the file
+   they came from. Greenfield with no code to read: say so; the foundation
+   then comes from the references plus the user's choice.
 2. **Measure every pick and the baseline** ([capture](references/capture.md)):
    one browser tab, desktop viewport, computed styles per site; the current
    site in a mobile viewport too. The baseline site (see Inputs) is always
@@ -54,7 +56,10 @@ the knife and ends with a direction the user approves.
    rhythm ranges, page heights.
 3. **Write per-site notes.** What each measured site argues, and how its
    values serve the argument — one short block per site, every claim tied to
-   a number or a fetch.
+   a number or a fetch. Confirm or clear each visual suspect the candidates
+   doc recorded, with the capture's own evidence — palette hexes,
+   background images, text-transform; whatever the reached rung cannot check
+   stands as a named gap, never a trend.
 4. **Synthesize in three layers.**
    - Conventions: what the whole category does — keep unless there is a
      reason not to; violating one costs trust.
@@ -80,9 +85,11 @@ the knife and ends with a direction the user approves.
    never contradict it; a foundation change is flagged as affecting every
    surface and is checked against each before approval. Nothing is written
    into DESIGN.md before the user approves a direction; values not yet
-   settled stay `undecided`. Both files live with the project's other
-   documentation — DESIGN.md beside the direction doc — and once approved,
-   DESIGN.md is linked from the project's agent instructions, so it is found
+   settled stay `undecided`. When no DESIGN.md exists, it is created with
+   the project's other documentation, beside the direction doc; when one
+   already exists, it is restructured into tiers in place, by proposal under
+   the design doc's evolution rules. Either way, once approved it is linked
+   from the project's agent instructions, so it is found
    wherever it sits.
 8. **Hand off.** `ui-design` implements against DESIGN.md. `ui-council` rates
    before and after — it needs a screenshot capture path; when none exists,

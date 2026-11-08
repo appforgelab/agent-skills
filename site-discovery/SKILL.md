@@ -36,8 +36,8 @@ proposes the design direction.
    seconds? Offer options, but invite free-form answers; a user's own wording
    often restructures the whole anchor. Hold one spare round for follow-ups
    their answers raise; after that, work with what you have.
-3. **Set the depth in the brief's round** — asking it as one more question
-   keeps the run to a single round. Default `standard`. Any cell can be
+3. **Set the depth in the brief's round**, as the last of its questions.
+   Default `standard`. Any cell can be
    overridden by a number ("standard, but eight sites fetched"); record the
    chosen depth in the doc:
 
@@ -55,9 +55,9 @@ proposes the design direction.
      exist.
    - Cross-industry: `best <adjacent industry> product websites <current
      year>` — one search outside the category, for structure worth
-     importing. At scan depth this is the search that drops; say so in the
-     doc.
-   - Teardowns and audits, which name sites worth fetching.
+     importing.
+   - Teardowns and audits, which name sites worth fetching. At scan depth
+     these last two searches are the ones that drop; say so in the doc.
 
    If a search returns nothing or pure slop, reword it once — different noun,
    the year in or out, "best" for "examples of" — then move on. Record every
@@ -80,7 +80,8 @@ proposes the design direction.
    Verdicts: strong keep, mixed, weak, unfetched.
 7. **Write the candidates doc** as `site-candidates.md` in the project's
    docs folder: the brief
-   (promise, what bothers the user, direction lean, motion, content scope),
+   (anchor, promise, what bothers the user, direction lean, motion, content
+   scope),
    the searches run, a table of candidates with evidence and verdicts, and
    the current site — or, for a site not yet built, the closest stand-in — as
    the baseline row. End with a recommended core set.
