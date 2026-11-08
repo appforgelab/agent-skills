@@ -19,20 +19,26 @@ them for composition; they never replace them for values.
   rejected. If the tool only takes functions, wrap the same body.
 - Save each site's raw JSON to scratch. The direction doc gets the distilled
   table; scratch keeps the receipts.
+- **Verify the probe against real sites when you change it.** Pages built to
+  reproduce a known failure encode the author's assumptions and pass; live
+  sites across stacks (a utility-class site, a hashed-class site, a site
+  builder's export, something hand-built) are the test that counts.
 
 ## The probe
 
 Runs in the page, returns JSON. Selector lists are tried in list order —
 a combined selector would return the first match in document order, which on
-a real site is the cookie bar. Page chrome (headers, navs, footers, dialogs)
-is skipped, and a nav's own CTA with it, on purpose: the body repeats the
-primary CTA on most sites. Button matching sticks to anchors and buttons, so
-a wrapper whose class merely contains `cta` or `button` never wins, and the
-h1 gets a second, chrome-allowed pass because masthead-pattern heroes keep
-their h1 inside the header.
+a real site is the cookie bar. Page chrome — headers, navs, footers, dialogs,
+including cookie consent built as a `div[role=dialog]` — is skipped, and a
+nav's own CTA with it, on purpose: the body repeats the primary CTA on most
+sites. The CTA itself is found by how it looks, not by class names:
+utility-class and hashed-class sites never carry `cta`/`btn`/`button` in
+their classes. Every picked element carries its `tag` and first words of
+`text`, so a misread is visible in the JSON instead of poisoning the table.
 
 ```js
 (() => {
+  const CHROME = 'header, nav, footer, dialog, [role=dialog], [aria-modal=true]';
   // First match for a selector list, in list order. Visible means at least
   // 8px, so screen-reader-only text at 1x1 is skipped. A selector *list
   // inside one string* matches in document order instead — that is why each
@@ -42,7 +48,7 @@ their h1 inside the header.
       for (const el of document.querySelectorAll(sel)) {
         const r = el.getBoundingClientRect();
         if (r.width >= 8 && r.height >= 8
-            && (allowChrome || !el.closest('header, nav, footer, dialog'))) {
+            && (allowChrome || !el.closest(CHROME))) {
           return el;
         }
       }
@@ -77,6 +83,8 @@ their h1 inside the header.
     const s = getComputedStyle(el);
     const r = el.getBoundingClientRect();
     return {
+      tag: el.tagName.toLowerCase(),
+      text: (el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 40),
       font: s.fontFamily.split(',')[0].replace(/['"]/g, ''),
       size: s.fontSize, weight: s.fontWeight, lh: s.lineHeight, ls: s.letterSpacing,
       color: hexOf(s.color), bg: bgOf(el), radius: s.borderRadius,
@@ -85,42 +93,72 @@ their h1 inside the header.
     };
   };
   const h1 = q(['h1']) || q(['h1'], true); // masthead heroes: h1 in the header
-  // The hero block: the first ancestor at or near the viewport's width,
+  // The CTA, by appearance: it paints its own background, carries short
+  // text, is button-sized, is nowhere near full width (the cap keeps
+  // banner rows out), and is not parked off-screen above or beside the
+  // viewport, where skip links live — below the fold is fine, hero CTAs
+  // can sit low.
+  let btn = null;
+  for (const el of document.querySelectorAll('a, button, [role=button]')) {
+    if (el.closest(CHROME)) continue;
+    const s = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    if (r.bottom <= 0 || r.right <= 0 || r.left >= window.innerWidth) continue;
+    const text = (el.textContent || '').trim().replace(/\s+/g, ' ');
+    if (!text || text.length > 40) continue;
+    if (r.height < 32 || r.height > 80) continue;
+    if (r.width < 40 || r.width > window.innerWidth * 0.5) continue;
+    if (!hexOf(s.backgroundColor) && s.backgroundImage === 'none') continue;
+    btn = el;
+    break;
+  }
+  // The hero block: the first ancestor at or near the viewport's width that
+  // is not taller than about 1.5 viewports (a whole-page wrapper is),
   // starting above the h1 so a container-width h1 is not itself mistaken
   // for the hero.
   let hero = null;
   if (h1) {
-    hero = h1.parentElement;
-    while (hero && hero !== document.body) {
-      if (hero.getBoundingClientRect().width >= window.innerWidth * 0.95) break;
-      hero = hero.parentElement;
+    let prev = null, el = h1.parentElement;
+    while (el && el !== document.body) {
+      const r = el.getBoundingClientRect();
+      if (r.height > window.innerHeight * 1.5) break;
+      prev = el;
+      if (r.width >= window.innerWidth * 0.95) { hero = el; break; }
+      el = el.parentElement;
     }
-    if (hero === document.body) hero = null;
+    hero = hero || prev || h1;
   }
-  // The content container: the widest binding max-width outside chrome.
-  // Non-binding values (such as 100%) resolve to the viewport or more,
-  // images and chips resolve small — the container lands between.
+  // The content container: the widest max-width outside chrome that is
+  // actually binding — the rendered width has reached the cap. Non-binding
+  // values (such as 100%) resolve to the viewport or more, small widgets
+  // sit inside their cap without touching it; the container does touch it.
   let wrap = null, wrapMax = 0;
   for (const el of document.querySelectorAll('main, div, section')) {
-    if (el.closest('header, nav, footer, dialog')) continue;
+    if (el.closest(CHROME)) continue;
     const r = el.getBoundingClientRect();
     if (r.width < 8 || r.height < 8) continue;
     const mw = parseFloat(getComputedStyle(el).maxWidth);
     if (!isFinite(mw) || mw >= window.innerWidth || mw < 480) continue;
+    if (r.width < mw - 1) continue;
     if (mw > wrapMax) { wrapMax = mw; wrap = el; }
   }
-  const cand = [...document.querySelectorAll('section, main > div')]
-    .filter((s) => !s.closest('header, nav, footer, dialog'))
-    .filter((s, i, arr) => !arr.some((o) => o !== s && o.contains(s)));
-  const secs = cand.slice(0, 8).map((s) => {
+  // Sections first; main > div only when the page has almost no <section>.
+  // The outermost of nested sections wins, so wrappers do not swallow rows.
+  let secsEls = [...document.querySelectorAll('section')]
+    .filter((s) => !s.closest(CHROME));
+  if (secsEls.length < 2) {
+    secsEls = [...document.querySelectorAll('main > div')]
+      .filter((s) => !s.closest(CHROME));
+  }
+  secsEls = secsEls.filter((s, i, arr) => !arr.some((o) => o !== s && o.contains(s)));
+  const secs = secsEls.slice(0, 8).map((s) => {
     const st = getComputedStyle(s);
     return { pad: st.paddingTop + '/' + st.paddingBottom, bg: bgOf(s) };
   });
   return JSON.stringify({
     title: document.title,
     h1: pick(h1), h2: pick(q(['h2'])), p: pick(q(['main p', 'article p', 'p'])),
-    btn: pick(q(['a[class*=cta]', 'button[class*=cta]', 'a[class*=btn]',
-                 'a[class*=button]', 'button', '[role=button]'])),
+    btn: pick(btn),
     hero: pick(hero),
     wrap: pick(wrap),
     bodyBg: bgOf(document.body),
@@ -140,9 +178,13 @@ comparability across sites, not exhaustive scraping.
   tracking. Three sites sharing a family is a convention; one alone is a
   choice. `p` is the lede or first body paragraph: on sites whose hero sits
   inside `main`, it is the hero lede — compare like with like.
-- `btn` — CTA treatment: size, weight, radius, color on bg.
+- `btn` — CTA treatment: size, weight, radius, color on bg. Chosen by a
+  rough appearance rule — check `tag` and `text` before trusting the row;
+  when they are plainly not the CTA, note the misread instead.
 - `caps` / `bgImage` — slop confirmation without screenshots: all-caps
-  tracked labels, and gradient or image backdrops.
+  tracked labels, and gradient or image backdrops. They can confirm a
+  suspect, never clear one — eyebrow labels and blurred blobs usually live
+  on other elements; clearing takes a screenshot.
 - `bodyBg` / `secs[].bg` — surface palette and section alternation, as hex;
   an alpha suffix (as in `#ffffff0a`) marks a translucent layer over whatever
   sits behind it. `null` means nothing paints there; the browser default
@@ -153,7 +195,9 @@ comparability across sites, not exhaustive scraping.
   fraction of the references' length is itself a finding. Sites with
   transform-based smooth scrolling can report the viewport height instead —
   when `docH` equals the viewport exactly, cross-check before trusting it.
-- `hero` / `wrap` — hero proportions and the content container's width.
+- `hero` / `wrap` — hero proportions and the content container's width. On
+  the mobile pass, `wrap` is always null by construction — the filter needs
+  a desktop viewport; do not read it as no container.
 
 ## Screenshots — the visuals ladder
 

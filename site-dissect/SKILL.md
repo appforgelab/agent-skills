@@ -2,7 +2,8 @@
 name: site-dissect
 description: >-
   Dissect comparable websites by measurement, not taste: derives the project's
-  foundation from the app's theme code first, extracts computed styles — type
+  foundation from an approved DESIGN.md or the app's theme code first,
+  extracts computed styles — type
   scale, palette, section rhythm, page length — from each picked site and from
   the current one as the baseline, synthesizes conventions, trends and gaps
   into keep/change/reject lists, and proposes two or three anti-convergent
@@ -27,9 +28,9 @@ the knife and ends with a direction the user approves.
   project's docs folder — with the user's picks and the brief. Read it before
   anything else; the brief's anchor drives the directions.
 - **Standalone** (the user named the sites): look for the candidates doc
-  anyway; if there is none, ask the brief questions site-discovery records —
-  anchor first, then promise, what bothers the user, direction lean, motion,
-  content scope — in one round before measuring.
+  anyway; if there is none, run the brief the way site-discovery runs it —
+  pre-filled from the repo, the anchor question first, one round — before
+  measuring.
 - **The baseline:** the current site. When none exists yet, the stand-in the
   candidates doc recorded; with neither, say the table carries no baseline
   row and let the references carry the argument alone.
@@ -56,10 +57,12 @@ the knife and ends with a direction the user approves.
    rhythm ranges, page heights.
 3. **Write per-site notes.** What each measured site argues, and how its
    values serve the argument — one short block per site, every claim tied to
-   a number or a fetch. Confirm or clear each visual suspect the candidates
-   doc recorded, with the capture's own evidence — palette hexes,
-   background images, text-transform; whatever the reached rung cannot check
-   stands as a named gap, never a trend.
+   a number or a fetch. Confirm each visual suspect the candidates doc
+   recorded where the capture's own evidence can — palette hexes, background
+   images, text-transform on the picked elements. A probe field can confirm
+   a suspect, never clear one — eyebrow labels and blurred blobs live on
+   other elements — so clearing takes a screenshot, and without one the
+   suspect stays a named gap, never a trend.
 4. **Synthesize in three layers.**
    - Conventions: what the whole category does — keep unless there is a
      reason not to; violating one costs trust.
