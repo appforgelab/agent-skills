@@ -2,14 +2,17 @@
 name: site-discovery
 description: >-
   Find the comparable websites worth learning from before a product site is
-  designed: reads the repo, asks a short brief, searches the category and one
-  adjacent industry, filters out template slop and stale listicles, and hands
-  over an evidence-only candidates doc with verdicts, ending with the user
-  picking three to five sites. Use whenever a marketing or product website is
-  about to be built, rebuilt or improved and the research should come first —
-  before mock-ups, before ui-design, before a line of the new site is written.
-  Also use when the user asks for competitor or reference websites. Measuring
-  the picks and proposing a direction is site-dissect's job, not this one.
+  designed: reads the repo, asks a short brief, searches the category and —
+  at standard depth or deeper — one adjacent industry, filters out template
+  slop and stale listicles, and hands over an evidence-only candidates doc
+  with verdicts, ending with the user picking three to five sites. Use
+  whenever a marketing or product website is about to be built or redesigned
+  and the research should come first — before mock-ups, before a line of the
+  new site is written. Also use when the user asks for competitor or
+  reference websites as design references. Targeted fixes to existing pages
+  — spacing, a hero, a single component — belong to ui-design and ui-council
+  instead. Measuring the picks and proposing a direction is site-dissect's
+  job, not this one.
 metadata:
   harness: [claude, codex, opencode]
 ---
@@ -33,7 +36,8 @@ proposes the design direction.
    seconds? Offer options, but invite free-form answers; a user's own wording
    often restructures the whole anchor. Hold one spare round for follow-ups
    their answers raise; after that, work with what you have.
-3. **Set the depth with the user.** Default `standard`. Any cell can be
+3. **Set the depth in the brief's round** — asking it as one more question
+   keeps the run to a single round. Default `standard`. Any cell can be
    overridden by a number ("standard, but eight sites fetched"); record the
    chosen depth in the doc:
 
@@ -44,22 +48,27 @@ proposes the design direction.
    | Deep | 6+ | 8+ | 10+ |
 
 4. **Search the category, then outside it.** Run, in order:
-   - Category incumbents: `best <category> apps <year>`.
+   - Category incumbents: `best <category> apps <current year>` — the
+     current year, not one the model remembers.
    - Promise twins: the product's promise, phrased as a user would say it —
      sites answering the same promise are the closest design briefs that
      exist.
-   - Cross-industry: `best <adjacent industry> product websites <year>` — one
-     search outside the category, for structure worth importing.
+   - Cross-industry: `best <adjacent industry> product websites <current
+     year>` — one search outside the category, for structure worth
+     importing. At scan depth this is the search that drops; say so in the
+     doc.
    - Teardowns and audits, which name sites worth fetching.
 
    If a search returns nothing or pure slop, reword it once — different noun,
    the year in or out, "best" for "examples of" — then move on. Record every
    query that was run in the doc.
-5. **Filter slop before fetching.** Skip as sources: undated listicles, SEO
-   aggregators, template galleries posing as inspiration. Flag as suspect, as
-   candidates: violet or purple default palettes, gradient-mesh or
-   blurred-blob heroes, emoji feature icons, all-caps tracked eyebrow labels,
-   badge walls, glassmorphism over photos. This list describes a moment and
+5. **Filter sources; expect visual slop.** Skip as sources: undated
+   listicles, SEO aggregators, template galleries posing as inspiration.
+   Treat as suspects to check at verdict time: violet or purple default
+   palettes, gradient-mesh or blurred-blob heroes, emoji feature icons,
+   all-caps tracked eyebrow labels, badge walls, glassmorphism over photos —
+   none of these are visible in a text fetch, so they stay unverified until
+   `site-dissect`'s capture confirms them. This list describes a moment and
    goes stale — re-check it against what is actually fetched rather than
    filtering mechanically, and remember a slop-looking site can still own a
    structure worth stealing; that is what the `mixed` verdict is for.
@@ -69,7 +78,8 @@ proposes the design direction.
    When no visual capture happened, keep content-and-structure verdicts
    separate from visual ones; never pass a text verdict off as a visual one.
    Verdicts: strong keep, mixed, weak, unfetched.
-7. **Write the candidates doc** into the project's docs folder: the brief
+7. **Write the candidates doc** as `site-candidates.md` in the project's
+   docs folder: the brief
    (promise, what bothers the user, direction lean, motion, content scope),
    the searches run, a table of candidates with evidence and verdicts, and
    the current site — or, for a site not yet built, the closest stand-in — as

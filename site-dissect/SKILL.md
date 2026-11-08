@@ -21,6 +21,19 @@ not remembered), what the project already owns, and the direction that fits
 both. Where `site-discovery` collects candidates, this skill puts them under
 the knife and ends with a direction the user approves.
 
+## Inputs
+
+- **From site-discovery:** the candidates doc — `site-candidates.md` in the
+  project's docs folder — with the user's picks and the brief. Read it before
+  anything else; the brief's anchor drives the directions.
+- **Standalone** (the user named the sites): look for the candidates doc
+  anyway; if there is none, ask the anchor question and the brief fields
+  site-discovery records — promise, what bothers the user, direction lean,
+  motion, content scope — in one round before measuring.
+- **The baseline:** the current site. When none exists yet, the stand-in the
+  candidates doc recorded; with neither, say the table carries no baseline
+  row and let the references carry the argument alone.
+
 ## Workflow
 
 1. **Start from the app, not the references.** Before measuring any outside
@@ -33,8 +46,9 @@ the knife and ends with a direction the user approves.
    user's choice.
 2. **Measure every pick and the baseline** ([capture](references/capture.md)):
    one browser tab, desktop viewport, computed styles per site; the current
-   site in a mobile viewport too. The current site is always measured — it is
-   the baseline to beat, not a reference to copy. Keep each site's raw JSON
+   site in a mobile viewport too. The baseline site (see Inputs) is always
+   measured — the bar to beat, not a reference to copy. Keep each site's raw
+   JSON
    in scratch and distill it into the direction doc's measurement table, as
    measured values only: fonts at exact sizes and weights, hex backgrounds,
    rhythm ranges, page heights.

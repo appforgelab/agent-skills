@@ -59,6 +59,7 @@ candidates doc — ending with the user picking three to five sites.
   in the depth table can be overridden inline.
 - **With:** `site-dissect`, which measures the picked sites and proposes the
   direction.
+- **Needs:** web search and page fetching.
 
 ### site-dissect
 
@@ -74,6 +75,8 @@ proposal, approval-gated.
 - **With:** `ui-design`, whose DESIGN.md conventions the proposal follows and
   which implements it; `ui-council` for before/after scoring when a
   screenshot path exists.
+- **Needs:** a browser that can run a script on the page; degrades to
+  fetched text.
 
 ### ui-council
 

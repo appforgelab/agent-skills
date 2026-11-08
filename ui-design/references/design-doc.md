@@ -24,9 +24,21 @@ library; code stays in code.
 Keep it to what a new designer must be told. Where a section has no answer
 yet, write "undecided" rather than inventing one.
 
+## Surfaces
+
+A project with more than one surface — an app and a website — tiers the doc:
+a `Foundation` section for what every surface shares, then one section per
+surface. A surface section extends the foundation, never contradicts it.
+Raters, improvers and agents work from the foundation plus their own
+surface's section; a foundation change is a proposal checked against every
+surface before approval.
+
 ## Bootstrap
 
 An existing app gets its de facto system recorded; a new project chooses one.
+Before either path, search the repo for a `DESIGN.md` that already exists —
+it may live anywhere, not only at the root — so a second one is never
+bootstrapped beside the first.
 
 **Existing app — derive it:**
 
