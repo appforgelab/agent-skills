@@ -45,6 +45,9 @@ Sort them without hardcoding the repo's layout:
    Dependabot re-resolve lockfiles instead of git-merging them.
 2. Wait for the rebase to land (2-10 min) and CI to finish. Use a PR
    watch if your harness offers one; otherwise poll about once a minute.
+   If the branch ref advanced but the PR head and checks stay on the old
+   SHA, force GitHub to recompute with a no-op base update:
+   `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -f base=main`.
 3. If the comment is ignored (no reaction on it, branch unmoved),
    re-comment exactly once. Never spam: queued rebases force-push
    mid-run and restart CI.
@@ -69,7 +72,8 @@ Sort them without hardcoding the repo's layout:
 - Lockfile-looking failures (lockfile out of sync, lockfile conflicts,
   audit failures on a stale lock) → `@dependabot rebase` again.
 - Failures caused by the bump (compile, analyze, tests) → fix the code
-  if the fix is small, otherwise hold the PR and report.
+  in a separate PR if the fix is small (never push the fix to the
+  Dependabot branch), otherwise hold the PR and report.
 - Failures unrelated to the diff (auth, timing, infra) → rerun the
   failed jobs once (`gh run rerun <id> --failed`); if they persist,
   hold and report.
