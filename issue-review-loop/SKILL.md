@@ -31,8 +31,9 @@ the issue or pushed back, hand it back for review, in a loop.
    - prompt: the issue URL, and that the reviewer should review only (no
      edits, no comments), report only findings it would block on, and say
      explicitly if it would approve. It may add non-blocking observations
-     as possible follow-ups, kept separate. Every finding must name a
-     realistic gap, risk or failure; unneeded complexity is one too.
+     as possible follow-ups, kept separate — alternative approaches belong
+     there. Every finding must name a realistic gap, risk or failure;
+     unneeded complexity is one too.
 3. For each blocking finding, update the issue, push back with a reason,
    or move it to a follow-up issue. Non-blocking ones become follow-ups
    only when worth someone's time; otherwise drop them. If the finding is
