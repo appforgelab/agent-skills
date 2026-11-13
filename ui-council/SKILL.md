@@ -71,7 +71,7 @@ and offer the defaults:
    Copy the shots into a new folder with a random name.
 3. **Rate.** Find each rater with T3's `orchestrator_capabilities` (pass its
    name as `search`). Prefer the newest full model, with reasoning effort
-   `xhigh` where it's offered. Start every rater at once with T3's
+   `high` where it's offered. Start every rater at once with T3's
    `delegate_task`, in `async` mode with a new `clientRequestId`. Use the
    prompt in [rating prompt](references/rating-prompt.md), filled in; with
    the `ui-design` rubric, swap that prompt's scoring block for
