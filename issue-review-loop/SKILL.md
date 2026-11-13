@@ -36,7 +36,9 @@ the issue or pushed back, hand it back for review, in a loop.
      unneeded complexity is one too.
 3. For each blocking finding, update the issue, push back with a reason,
    or move it to a follow-up issue. Non-blocking ones become follow-ups
-   only when worth someone's time; otherwise drop them. If the finding is
+   only when worth someone's time; otherwise drop them. An alternative
+   approach worth taking goes into the issue now, or becomes a question
+   for the user if it changes scope. If the finding is
    about something already decided but not written down, write the
    decision into the issue. Don't decide the user's calls (scope, product
    choices, wording users see): collect them as questions for the user.
