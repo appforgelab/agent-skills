@@ -48,21 +48,28 @@ Sort them without hardcoding the repo's layout:
    completion. Use one bounded sleep registered as a wake-up, not
    polling: no loops or repeated checks while waiting. If your harness
    lacks either capability, poll about once a minute if allowed. If
-   polling is also unavailable, hand back the PR rather than leaving a
-   bare watch.
+   polling is also unavailable, stop and report the batch rather than
+   leaving a bare watch.
 
-   If the watch fires first, check the merge gates. Retire the timer
-   only if the watch confirms CI ran for the rebase. If the timer fires
-   first (or the same interval elapses while polling), check for a
-   reaction on the rebase comment or a branch ref that advanced after
-   the comment timestamp. Either acknowledges the comment: keep
-   waiting for CI. If neither happened, treat the comment as ignored
-   and advance to the next rung of the escalation ladder below. Arm a
-   fresh timer for each rebase comment when using a watch.
+   Tie each timer to its PR, comment, and wait phase. Retire it when
+   leaving that wait and ignore stale wake-ups. Stop watching a PR
+   when moving on or handing it back.
 
-   If the branch ref advanced but the PR head and checks stay on the old
+   If the watch fires first, check the merge gates. An unrelated event
+   doesn't end the wait. When the timer fires (or the same interval
+   elapses while polling), check for a reaction on the rebase comment
+   or a branch ref that advanced after the comment timestamp. Either
+   acknowledges the comment. If neither happened, treat the comment as
+   ignored and advance to the next rung of the escalation ladder below.
+   Use a fresh deadline for each rebase comment.
+
+   If acknowledged, compare the branch ref with the PR head before
+   waiting again. If the ref advanced but the head is still on the old
    SHA, force GitHub to recompute with a no-op base update:
    `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -f base=main`.
+   If GitHub has not queued fresh CI, allow one separate 5-10 min wait
+   for it to do so, using the same wait mechanism. Hold and report the
+   PR if there is still no fresh run at that deadline.
 3. If the comment is ignored (no reaction on it, branch unmoved),
    re-comment exactly once. Never spam: queued rebases force-push
    mid-run and restart CI.
