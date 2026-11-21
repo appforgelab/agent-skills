@@ -1,65 +1,67 @@
 ---
 name: ui-council
 description: >-
-  Have a panel of models rate screenshots of an app's screens, blind, then
-  improve the UI in rounds until a round limit or target score is reached, and
-  report before and after. Use when the user asks for a UI council, or wants
-  models to score, critique or improve screens of an Android, iOS or web app.
-  The user may give the platform, the screens and their states, the raters,
-  the number of rounds or a target score, or ask for rating only.
+  Have a panel of models rate screenshots of an app's screens, blind, add a
+  measurement pass for the spacing and alignment the eye misses, and report
+  scores, findings and suggested improvements. It rates and suggests only; it
+  never changes the app. Use when the user asks for a UI council, or wants
+  models to score or critique screens of a web, desktop, Android or iOS app.
+  The user may give the platform, the screens and their states, the raters
+  and the rubric.
 metadata:
   harness: [claude, codex, opencode]
 ---
 
 # UI Council
 
-Fresh models rate screenshots of the screens you're improving, without
-knowing what changed. Between rounds you improve the UI. At the end, show the
-scores and the screens before and after.
+Fresh models rate screenshots of an app's screens, blind. A measurement
+pre-pass, which only you see, checks the spacing rhythm and alignment that
+raters can't judge by eye. You merge both into a report: the scores, what's
+wrong and the suggested improvements. You never change the app's code,
+design or content.
 
 ## Inputs
 
 Use what the user gave. Ask for anything missing in one batch of questions,
 and offer the defaults:
 
-- **Platform:** `android` (default), `ios` or `web`.
+- **Platform:** `web`, `desktop`, `android` or `ios`; default from the
+  project.
 - **Screens and states:** for each screen, the states to capture, for example
   signed out, signed in, an error, or the largest text size. For a whole app
   or site, list its screens and states from the code and have the user
   confirm the list.
 - **Raters:** sol and opus by default; any of sol, opus, glm or muse.
-- **When to stop:** a number of improvement rounds (default 1), or a target
-  average score such as 9.0 with a round limit (default 3).
-- **Mode:** improve (default), or rate only.
 - **Rubric:** the default five criteria, or `ui-design`'s design rubric —
   seven dimensions with anchors, identity among them and scored against the
-  project's `DESIGN.md` — when the user asks for it. No `DESIGN.md` yet:
-  bootstrap it with the user before round 0
+  project's `DESIGN.md` — when the user asks for it. With no `DESIGN.md`,
+  Identity is scored N/O, and the report suggests creating one
   ([design doc](../ui-design/references/design-doc.md)). When a `DESIGN.md`
-  exists and the screens to improve are part of a larger app, also pick one
-  untouched screen as the identity reference before round 0: it joins every
-  round's shots and prompts, is never a target, and is not itself rated.
-  This rubric scores States on what the shots show, so include error, empty
-  and loading states among the captured states when possible.
-- **Issue:** optional. Its decisions are constraints, and the report goes
-  there.
+  exists and the rated screens are part of a larger app, add one more
+  screen as the identity reference: the one the user names, otherwise one
+  you pick and name in the report. It joins the shots and the prompt, and
+  is not itself rated. This rubric scores States on what the shots show, so
+  include error, empty and loading states when possible.
+- **Constraints:** optional. Decisions already made, from the user, an
+  issue or the project's docs.
 
 ## Rules
 
-- **Keep rounds comparable.** Every round uses the same device or viewport,
-  the same states and file names, the same prompt, and fresh raters. Never
-  tell raters what changed or which round it is.
-- **Decisions the user made are constraints.** They come from the issue, the
-  conversation or the project's docs. When raters push against one, record
-  it as a question and don't act on it. Don't chase the score.
+- **Rate and suggest; change nothing.** Never edit the app's code, design,
+  content or docs, and never commit, push or open anything. Building and
+  running the app to capture it is fine.
+- **Raters see only the screens as they are now.** Every run uses the same
+  prompt, word for word, and fresh raters. Never tell them anything about
+  earlier ratings, scores or changes.
+- **Raters get screenshots only.** Element trees, measurements and overlays
+  are for you. Never put them in the raters' folder or prompt.
+- **Decisions already made are constraints.** When raters push against one,
+  record it as a question, not a suggestion.
 - **Some calls stay with the user:** wording users see, product scope and
-  anything about pricing. Collect them as questions for the end, and keep
-  working on the rest.
+  anything about pricing. Turn those into questions.
 - **Never do anything irreversible or outward to reach a state,** such as
   deleting an account, buying something or sending a message. Use a test
   account, because screenshots go to the raters' providers.
-- **Follow the project's rules** for branches, checks, tests and PRs. Asking
-  for this skill authorizes a branch, commits, an issue and a PR.
 
 ## How
 
@@ -67,9 +69,11 @@ and offer the defaults:
    the code of the target screens. Work out how to reach each state on a real
    build ([capture](references/capture.md)). If a state can't be reached,
    say so and ask; never fake it.
-2. **Capture round 0.** Build the current version and capture every state.
-   Copy the shots into a new folder with a random name.
-3. **Rate.** Find each rater with T3's `orchestrator_capabilities` (pass its
+2. **Capture.** Build and run the current version and capture every state.
+   Copy the shots, and nothing else, into a new folder with a random name.
+3. **Measure.** Run the [measurement pre-pass](references/measure.md) on
+   every shot, and check its overlays. It needs only the screenshots.
+4. **Rate.** Find each rater with T3's `orchestrator_capabilities` (pass its
    name as `search`). Prefer the newest full model, with reasoning effort
    `high` where it's offered. Start every rater at once with T3's
    `delegate_task`, in `async` mode with a new `clientRequestId`. Use the
@@ -79,33 +83,18 @@ and offer the defaults:
    fill in its token summary. Then
    collect the results as T3 directs, without polling. If an answer ignores
    the format, rerun that rater once.
-4. **Check whether to stop.**
-   - Rate-only mode stops after round 0.
-   - Otherwise stop when the rounds are done or the average reaches the
-     target.
-   - Also stop early if two rounds in a row raise the average by less than
-     0.3 and only taste or points that clash with decisions are left.
 5. **Triage.**
    - Merge points that several raters share.
-   - Act on clear improvements that fit the constraints, favouring shared
-     points.
-   - Turn the user's calls into questions.
+   - Add the measured findings, each marked as a defect or as deliberate.
+     Check raters' spacing and alignment points against the numbers
+     ([measure](references/measure.md#read-the-findings)).
+   - Turn clear defects that fit the constraints into suggested
+     improvements, most important first, favouring shared and measured
+     points. Each says what's wrong and what to change, not how to code it.
+   - Turn the user's calls, and points that clash with constraints, into
+     questions.
    - Drop points that are only taste, and note why.
-6. **Improve.** Make the round's changes, kept small. With the `ui-design`
-   rubric, improve exactly as ui-design's [With
-   ui-council](../ui-design/SKILL.md#with-ui-council) section directs. Run
-   the project's checks
-   and the tests that cover these screens. Build, capture the same states,
-   and go back to step 3 with fresh raters.
-7. **Finish** ([report](references/report.md)):
-   - If anything changed, commit. If no issue was given, open one that
-     records what was done and why. Then open a PR that refers to the issue.
-     A run with no changes skips this step — but a bootstrapped DESIGN.md is
-     a change.
-   - Show the report page: the scores, each state before and after, the
-     changes made in each round, and the questions.
-   - Post the scores, the changes and the questions as a comment on the
-     issue.
-   - Restore any device settings you changed.
+6. **Report** ([report](references/report.md)), and restore any device
+   settings you changed.
 
 If `delegate_task` isn't available, say so and stop. Don't fake the ratings.

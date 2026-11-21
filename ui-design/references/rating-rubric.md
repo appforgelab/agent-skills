@@ -2,10 +2,10 @@
 
 For a ui-council run with this rubric, take ui-council's rating prompt (at
 `../../ui-council/references/rating-prompt.md`, next to this skill) and swap
-its scoring block — from "Score each of the five criteria" through "Most
-important first. Keep each item short and concrete." — for the block below.
-Keep the rest word for word: the rules, the blindness, the same prompt every
-round. The anchors below are the rater-facing digest of
+its scoring block — from "Score each of the five criteria" through "even for
+issues too small to cost points." — for the block below. Keep the rest word
+for word: the rules, the blindness, the rhythm and alignment check, the same
+prompt every time. The anchors below are the rater-facing digest of
 [the design language](design-language.md), which stays authoritative.
 Placeholders:
 
@@ -70,10 +70,13 @@ summary):
 Score: N.N/10
 Hierarchy N.N · Typography N.N · Spacing N.N · Colour N.N · States N.N · Layout N.N · Identity N.N
 
+Rhythm and alignment: each gap or guide that looks off, or "none seen"
+
 What's wrong and what I would change:
 1. [Dimension] ...
 2. [Dimension] ...
 ```
 
-Most important first. Keep each item short and concrete.
+Most important first. Keep each item short and concrete. Always fill in the
+Rhythm and alignment line, even for issues too small to cost points.
 ````
