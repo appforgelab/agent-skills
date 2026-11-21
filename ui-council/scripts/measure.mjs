@@ -833,25 +833,29 @@ function rowBands(items, where) {
   const bands = [];
   for (const it of [...items].sort((a, b) => a.ink.y0 - b.ink.y0 || a.ink.x0 - b.ink.x0)) {
     const h = it.ink.y1 - it.ink.y0;
-    // An item joins a band through a member whose vertical span coincides
-    // with its own: more than half the taller one's height in overlap.
-    // A sidebar or a tall action spans several rows and overlaps each by
-    // less than half itself, so it cannot glue them into one band. The
-    // rule also bounds the height ratio: overlap never exceeds the
-    // shorter height, so max < 2 × min whenever it holds.
-    const band = bands.find((bd) =>
-      bd.items.some((m) => {
-        const mh = m.ink.y1 - m.ink.y0;
-        const overlap = Math.min(m.ink.y1, it.ink.y1) - Math.max(m.ink.y0, it.ink.y0);
-        return overlap > 0.5 * Math.max(h, mh);
-      })
+    // An item joins a band through a member of similar height it overlaps
+    // by more than half the shorter one — a baseline label beside a taller
+    // icon qualifies, a sidebar does not. The band must also keep a span
+    // common to every member: a control reaching across two rows overlaps
+    // each row by more than half the shorter height, yet the two rows
+    // share no span, so one band can never hold both.
+    const band = bands.find(
+      (bd) =>
+        Math.min(bd.span1, it.ink.y1) - Math.max(bd.span0, it.ink.y0) > 0 &&
+        bd.items.some((m) => {
+          const mh = m.ink.y1 - m.ink.y0;
+          const overlap = Math.min(m.ink.y1, it.ink.y1) - Math.max(m.ink.y0, it.ink.y0);
+          return overlap > 0.5 * Math.min(h, mh) && Math.max(h, mh) <= 2 * Math.min(h, mh);
+        })
     );
     if (band) {
       band.items.push(it);
       band.ink = unionBox(band.ink, it.ink);
       band.rect = unionBox(band.rect, it.rect);
+      band.span0 = Math.max(band.span0, it.ink.y0);
+      band.span1 = Math.min(band.span1, it.ink.y1);
     } else {
-      bands.push({ items: [it], ink: it.ink, rect: it.rect });
+      bands.push({ items: [it], ink: it.ink, rect: it.rect, span0: it.ink.y0, span1: it.ink.y1 });
     }
   }
   const rows = bands.filter((bd) => bd.items.length >= 2);
@@ -964,19 +968,20 @@ for (const c of [screen, ...elements]) {
 const leaves = elements.filter((e) => e.children.length === 0);
 for (const a of leaves) {
   let best = null;
-  let nearestBelow = null;
+  const below = [];
   for (const b of leaves) {
     if (b === a || b.ink.y0 < a.ink.y1 - 1) continue;
-    if (!nearestBelow || b.ink.y0 < nearestBelow.ink.y0) nearestBelow = b;
+    below.push(b);
     if (Math.min(a.ink.x1, b.ink.x1) <= Math.max(a.ink.x0, b.ink.x0)) continue;
     if (!best || b.ink.y0 < best.ink.y0) best = b;
   }
-  // Both partners are recorded when they differ: the nearest element
-  // below even without horizontal overlap, so a pair that drifts apart
-  // keeps its key, and the nearest overlapping one, the only pairing
-  // that can be a finding.
-  for (const b of new Set([best, nearestBelow])) {
-    if (!b || U(b.ink.y0 - a.ink.y1) > 64) continue;
+  // Every element below within reach is recorded, however they align.
+  // Exclusive pairings — the nearest, the nearest overlapping — can be
+  // stolen by an unrelated neighbour the moment a defect drifts
+  // sideways, deleting the key the re-measure needs. Only the nearest
+  // overlapping pairing can be a finding.
+  for (const b of below) {
+    if (U(b.ink.y0 - a.ink.y1) > 64) continue;
     const options = [
       ["left edges", a.ink.x0, b.ink.x0],
       ["centres", (a.ink.x0 + a.ink.x1) / 2, (b.ink.x0 + b.ink.x1) / 2],

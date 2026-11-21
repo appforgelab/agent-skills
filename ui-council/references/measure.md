@@ -119,9 +119,10 @@ glance there. Drop the findings it explains.
 - After a change, re-run on the new shot and compare the same keys in
   `--json`: the recorded values say whether the relationship actually
   moved, even once it stops being a finding. A fix that overshot reads as
-  a bigger `off`, not as silence. A pair that drifted flush to an edge,
-  apart past overlap, or grew to fill its frame (`wide`), keeps its record
-  too — so a missing key means the element itself is gone, not that the
+  a bigger `off`, not as silence. Every pair within reach is recorded,
+  however it drifted — flush to an edge, apart past overlap, sideways to
+  another column, or grown to fill its frame (`wide`) — so a missing key
+  means an element left the page or moved out of reach, not that the
   relationship changed.
 
 ## Limits
