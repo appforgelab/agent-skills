@@ -545,6 +545,11 @@ const U = (px) => Math.round((px / unit) * 10) / 10;
 const IGNORE_TOP = Math.round(num("ignore-top") * unit);
 const IGNORE_BOTTOM = H - Math.round(num("ignore-bottom") * unit);
 
+const area = (b) => (b.x1 - b.x0) * (b.y1 - b.y0);
+const same = (a, b) =>
+  Math.max(Math.abs(a.x0 - b.x0), Math.abs(a.y0 - b.y0), Math.abs(a.x1 - b.x1), Math.abs(a.y1 - b.y1)) <=
+  Math.max(1, unit / 2);
+
 // Elements come from two sources, merged below. The shot is always cut
 // into blocks: they carry the ink detail inside painted boxes, such as a
 // button's label. The tree, when given, adds readable names, layout boxes
@@ -558,6 +563,7 @@ let elements = blocks.map((p, i) => {
   return {
     label: `block ${i + 1}`,
     named: false,
+    painted: true,
     role: p.container ? "container" : "block",
     rect,
     ink: { ...rect, density: p.density },
@@ -589,7 +595,10 @@ if (!geometry) {
       .map((f) => f.rect);
     const bg = ringBackground(e.rect);
     const ink = bg && inkBox(e.rect, bg, skip);
-    if (ink) elements.push({ ...e, ink, bg });
+    // Painted by its own box: a filled button or bordered card, not an
+    // invisible layout group. Judged on the tree's own rect, before any
+    // merge can widen it with a hit target.
+    if (ink) elements.push({ ...e, painted: same(e.rect, ink), ink, bg });
   }
 }
 if (elements.length === 0) {
@@ -598,10 +607,6 @@ if (elements.length === 0) {
 
 // Merge elements whose ink is the same box (a button and its label), keeping
 // the most telling label.
-const area = (b) => (b.x1 - b.x0) * (b.y1 - b.y0);
-const same = (a, b) =>
-  Math.max(Math.abs(a.x0 - b.x0), Math.abs(a.y0 - b.y0), Math.abs(a.x1 - b.x1), Math.abs(a.y1 - b.y1)) <=
-  Math.max(1, unit / 2);
 elements.sort((a, b) => area(a.ink) - area(b.ink));
 const kept = [];
 for (const e of elements) {
@@ -613,7 +618,12 @@ for (const e of elements) {
     twin.role = e.role;
     twin.named = true;
   }
-  if (twin) twin.rect = unionBox(twin.rect, e.rect);
+  if (twin) {
+    twin.rect = unionBox(twin.rect, e.rect);
+    // The union widens the rect with hit-area geometry; painting is
+    // evidence from either source, not from the widened box.
+    twin.painted = twin.painted || e.painted;
+  }
 }
 elements = kept;
 function unionBox(a, b) {
@@ -641,7 +651,7 @@ for (const e of elements) {
   parent.children.push(e);
 }
 for (const e of elements) {
-  e.visible = e.children.length > 0 && same(e.ink, e.rect);
+  e.visible = e.children.length > 0 && e.painted;
 }
 
 // Unique names, so findings can name each element. An
@@ -740,12 +750,12 @@ function offCentre(item, frame, frameName, where) {
   if (w > 0.8 * (frame.x1 - frame.x0)) return;
   const left = U(item.ink.x0 - frame.x0);
   const right = U(frame.x1 - item.ink.x1);
-  // Flush with an edge means aligned to it, not centred.
-  if (left <= ALIGN || right <= ALIGN) return;
   const off = Math.abs(left - right) / 2;
-  // Every relationship is recorded, however far off, so a re-measure can
-  // compare before and after a fix even once it stops being a finding.
-  const cls = off <= ALIGN ? "aligned" : off <= NEAR ? "near" : "off";
+  // Flush with an edge means aligned to it, not centred — still recorded,
+  // so the key survives a fix that drifts past an edge. Every
+  // relationship is kept, however far off, so a re-measure can compare
+  // before and after a fix even once it stops being a finding.
+  const cls = left <= ALIGN || right <= ALIGN ? "flush" : off <= ALIGN ? "aligned" : off <= NEAR ? "near" : "off";
   const y = (item.ink.y0 + item.ink.y1) / 2;
   const m = {
     kind: "off-centre",
@@ -820,10 +830,16 @@ function rowBands(items, where) {
   const bands = [];
   for (const it of [...items].sort((a, b) => a.ink.y0 - b.ink.y0 || a.ink.x0 - b.ink.x0)) {
     const h = it.ink.y1 - it.ink.y0;
-    const band = bands.find((bd) => {
-      const overlap = Math.min(bd.ink.y1, it.ink.y1) - Math.max(bd.ink.y0, it.ink.y0);
-      return overlap > 0.5 * Math.min(h, bd.ink.y1 - bd.ink.y0);
-    });
+    // An item joins a band it overlaps vertically — but only a member of
+    // similar height: a sidebar or a divider spans several rows and would
+    // otherwise glue them into one band.
+    const band = bands.find((bd) =>
+      bd.items.some((m) => {
+        const mh = m.ink.y1 - m.ink.y0;
+        const overlap = Math.min(m.ink.y1, it.ink.y1) - Math.max(m.ink.y0, it.ink.y0);
+        return overlap > 0.5 * Math.min(h, mh) && Math.max(h, mh) <= 2 * Math.min(h, mh);
+      })
+    );
     if (band) {
       band.items.push(it);
       band.ink = unionBox(band.ink, it.ink);
@@ -942,13 +958,18 @@ for (const c of [screen, ...elements]) {
 const leaves = elements.filter((e) => e.children.length === 0);
 for (const a of leaves) {
   let best = null;
+  let nearestBelow = null;
   for (const b of leaves) {
     if (b === a || b.ink.y0 < a.ink.y1 - 1) continue;
+    if (!nearestBelow || b.ink.y0 < nearestBelow.ink.y0) nearestBelow = b;
     if (Math.min(a.ink.x1, b.ink.x1) <= Math.max(a.ink.x0, b.ink.x0)) continue;
     if (!best || b.ink.y0 < best.ink.y0) best = b;
   }
-  if (!best || U(best.ink.y0 - a.ink.y1) > 64) continue;
-  const b = best;
+  // The nearest element below, overlapping or not: a pair that drifts
+  // apart horizontally keeps its record, only overlapping pairs can be
+  // findings.
+  const b = best ?? nearestBelow;
+  if (!b || U(b.ink.y0 - a.ink.y1) > 64) continue;
   const options = [
     ["left edges", a.ink.x0, b.ink.x0],
     ["centres", (a.ink.x0 + a.ink.x1) / 2, (b.ink.x0 + b.ink.x1) / 2],
@@ -971,7 +992,7 @@ for (const a of leaves) {
     y: a.ink.y0,
   };
   measures.push(m);
-  if (cls === "near" && !(unguided.has(a.name) && unguided.has(b.name))) findings.push(m);
+  if (best && cls === "near" && !(unguided.has(a.name) && unguided.has(b.name))) findings.push(m);
 }
 
 findings.sort((a, b) => a.y - b.y);

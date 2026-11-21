@@ -53,9 +53,9 @@ It reports:
   one is a deliberate group break. Wider steps are plainly deliberate.
 - **Gaps:** every vertical gap.
 
-Every centring and alignment pair is kept in `--json`, classed `aligned`,
-`near` or `off`; only the `near` band is a finding. All thresholds are
-options; see `--help`.
+Every centring and alignment pair is kept in `--json`, classed `flush`,
+`aligned`, `near` or `off`; only the `near` band is a finding. All
+thresholds are options; see `--help`.
 
 ## Scale
 
@@ -118,7 +118,9 @@ glance there. Drop the findings it explains.
 - After a change, re-run on the new shot and compare the same keys in
   `--json`: the recorded values say whether the relationship actually
   moved, even once it stops being a finding. A fix that overshot reads as
-  a bigger `off`, not as silence.
+  a bigger `off`, not as silence. A pair that drifted flush to an edge, or
+  apart past overlap, keeps its record too — so a missing key means the
+  element itself is gone, not that the relationship changed.
 
 ## Limits
 
