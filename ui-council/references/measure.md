@@ -53,7 +53,9 @@ It reports:
   one is a deliberate group break. Wider steps are plainly deliberate.
 - **Gaps:** every vertical gap.
 
-All thresholds are options; see `--help`.
+Every centring and alignment pair is kept in `--json`, classed `aligned`,
+`near` or `off`; only the `near` band is a finding. All thresholds are
+options; see `--help`.
 
 ## Scale
 
@@ -66,11 +68,14 @@ pixels and the thresholds in units are off.
 
 ## An element tree, if you have one
 
-A tree is optional. It replaces the anonymous "block N" names with real
-labels, and adds the gap between the layout boxes next to each ink gap.
-When those two differ, padding or hit-area chrome explains the difference.
-If the capture tool gives element rects for free, save them as
-`<shot>.tree.json` and pass the file after the shot:
+A tree is optional. The shot is cut into blocks either way, so a tree
+never hides ink detail, such as a button's label sitting off centre inside
+its fill. What the tree adds: real labels in place of the anonymous
+"block N" names, the gap between the layout boxes next to each ink gap
+(when those two differ, padding or hit-area chrome explains the
+difference), and containers the pixels alone cannot see, such as an
+invisible layout group. If the capture tool gives element rects for free,
+save them as `<shot>.tree.json` and pass the file after the shot:
 
 - a DOM probe on the web ([capture](capture.md#web));
 - an accessibility snapshot from a device or desktop automation tool;
@@ -110,6 +115,10 @@ glance there. Drop the findings it explains.
   `Not now` 26, below 44: 1.7×". Equal steps in code can render unequal once
   paddings and hit areas stack, so the numbers say what's wrong. Never
   prescribe a code value from them.
+- After a change, re-run on the new shot and compare the same keys in
+  `--json`: the recorded values say whether the relationship actually
+  moved, even once it stops being a finding. A fix that overshot reads as
+  a bigger `off`, not as silence.
 
 ## Limits
 

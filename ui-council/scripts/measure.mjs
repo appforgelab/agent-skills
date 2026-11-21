@@ -8,10 +8,13 @@
 //
 // The screenshot alone is enough: it is cut into blocks on its blank rows
 // and columns, letters merged into words, cards and filled buttons opened
-// up against their own fill. An element tree is optional and only adds
-// readable names: any JSON or XML whose elements carry rects as
-// {x, y, width, height}, {left, top, right, bottom} or "[l,t][r,b]", such
-// as an accessibility snapshot or a DOM dump.
+// up against their own fill. An element tree is optional: any JSON or XML
+// whose elements carry rects as {x, y, width, height}, {left, top, right,
+// bottom} or "[l,t][r,b]", such as an accessibility snapshot or a DOM
+// dump. A tree adds readable names, layout boxes and containers the shot
+// alone cannot show; the shot's blocks are still measured either way, so
+// ink detail inside a painted box, such as a button's label, is never
+// lost by adding one.
 //
 // Every element's box is trimmed to its ink — the pixels that differ from
 // the background behind it — so gaps are what a viewer sees, not layout
@@ -542,15 +545,34 @@ const U = (px) => Math.round((px / unit) * 10) / 10;
 const IGNORE_TOP = Math.round(num("ignore-top") * unit);
 const IGNORE_BOTTOM = H - Math.round(num("ignore-bottom") * unit);
 
-let elements = [];
-if (geometry) {
+// Elements come from two sources, merged below. The shot is always cut
+// into blocks: they carry the ink detail inside painted boxes, such as a
+// button's label. The tree, when given, adds readable names, layout boxes
+// and containers the pixels alone cannot show.
+const measuredArea = { x0: 0, y0: IGNORE_TOP, x1: W, y1: IGNORE_BOTTOM };
+const blocks = [];
+segment(measuredArea, borderBackground(measuredArea, 0), 0, unit, blocks);
+blocks.sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0);
+let elements = blocks.map((p, i) => {
+  const rect = { x0: p.x0, y0: p.y0, x1: p.x1, y1: p.y1 };
+  return {
+    label: `block ${i + 1}`,
+    named: false,
+    role: p.container ? "container" : "block",
+    rect,
+    ink: { ...rect, density: p.density },
+  };
+});
+if (!geometry) {
+  notes.push("No tree: elements are blocks numbered top to bottom; the overlay shows which is which.");
+} else {
   const boxes = geometry.nodes
     .map((n) => {
       const x0 = Math.max(0, Math.round(n.x * rectScale));
       const y0 = Math.max(0, Math.round(n.y * rectScale));
       const x1 = Math.min(W, Math.round((n.x + n.w) * rectScale));
       const y1 = Math.min(H, Math.round((n.y + n.h) * rectScale));
-      return { label: n.label, role: n.role, rect: { x0, y0, x1, y1 } };
+      return { label: n.label, named: true, role: n.role, rect: { x0, y0, x1, y1 } };
     })
     .filter(({ rect: r }) => {
       const w = r.x1 - r.x0;
@@ -569,26 +591,9 @@ if (geometry) {
     const ink = bg && inkBox(e.rect, bg, skip);
     if (ink) elements.push({ ...e, ink, bg });
   }
-  if (elements.length === 0) {
-    fatal("no element of the tree has visible ink in the measured area; check that the tree and the shot are of the same screen, and the --ignore options");
-  }
-} else {
-  const area = { x0: 0, y0: IGNORE_TOP, x1: W, y1: IGNORE_BOTTOM };
-  const bg = borderBackground(area, 0);
-  const out = [];
-  segment(area, bg, 0, unit, out);
-  out.sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0);
-  // The cut already trimmed each block to its ink against its own backdrop.
-  elements = out.map((p, i) => {
-    const rect = { x0: p.x0, y0: p.y0, x1: p.x1, y1: p.y1 };
-    return {
-      label: `block ${i + 1}`,
-      role: p.container ? "container" : "block",
-      rect,
-      ink: { ...rect, density: p.density },
-    };
-  });
-  notes.push("No tree: elements are blocks numbered top to bottom; the overlay shows which is which.");
+}
+if (elements.length === 0) {
+  fatal("no visible ink in the measured area; check that the shot and the --ignore options cover the screen meant to be measured");
 }
 
 // Merge elements whose ink is the same box (a button and its label), keeping
@@ -602,7 +607,12 @@ const kept = [];
 for (const e of elements) {
   const twin = kept.find((k) => same(k.ink, e.ink));
   if (!twin) kept.push(e);
-  else if (!twin.label && e.label) twin.label = e.label;
+  // A tree's name says more than the block's number.
+  else if (e.named && !twin.named && e.label) {
+    twin.label = e.label;
+    twin.role = e.role;
+    twin.named = true;
+  }
   if (twin) twin.rect = unionBox(twin.rect, e.rect);
 }
 elements = kept;
@@ -690,9 +700,16 @@ function widestCut(items, dir) {
   return best;
 }
 
+// Names of the leaves under n: a built cut node, or an element (whose
+// children are elements).
 function leafNames(n) {
-  return n.leaf ? [n.leaf.name] : n.kids.flatMap(leafNames);
+  if (n.leaf) return [n.leaf.name];
+  const kids = n.kids ?? (n.children?.length ? n.children : null);
+  return kids ? kids.flatMap(leafNames) : [n.name];
 }
+
+const joinNames = (names) =>
+  names.length <= 3 ? names.join(" + ") : `${names[0]} + … + ${names.at(-1)} (${names.length})`;
 
 function build(items) {
   const ink = items.map((k) => k.ink).reduce(unionBox);
@@ -712,7 +729,7 @@ function build(items) {
     node = { dir: "pile", kids: items.map((k) => build([k])), ink, rect };
   }
   const names = leafNames(node);
-  node.name = names.length <= 3 ? names.join(" + ") : `${names[0]} + … + ${names.at(-1)} (${names.length})`;
+  node.name = joinNames(names);
   return node;
 }
 
@@ -726,12 +743,16 @@ function offCentre(item, frame, frameName, where) {
   // Flush with an edge means aligned to it, not centred.
   if (left <= ALIGN || right <= ALIGN) return;
   const off = Math.abs(left - right) / 2;
-  if (off <= ALIGN || off > NEAR) return;
+  // Every relationship is recorded, however far off, so a re-measure can
+  // compare before and after a fix even once it stops being a finding.
+  const cls = off <= ALIGN ? "aligned" : off <= NEAR ? "near" : "off";
   const y = (item.ink.y0 + item.ink.y1) / 2;
   const m = {
     kind: "off-centre",
     key: `centre ${frameName} | ${item.name}`,
     values: [left, right],
+    off: Math.round(off * 10) / 10,
+    cls,
     text: `"${item.name}" is ${fmt(off)} off centre in "${frameName}"${where}: ${fmt(left)} on the left, ${fmt(right)} on the right`,
     draw: [
       { horizontal: true, y, x0: frame.x0, x1: item.ink.x0, ink: left },
@@ -740,10 +761,86 @@ function offCentre(item, frame, frameName, where) {
     y: item.ink.y0,
   };
   measures.push(m);
-  findings.push(m);
+  if (cls === "near") findings.push(m);
 }
 
 const unguided = new Set();
+const guideSeen = new Set();
+
+// Two stacked rows should share at least one vertical guide: a left edge,
+// centre or right edge. Related rows are of similar height, and close in
+// ink or touching as layout boxes; a row of cards above a row of links is
+// not a pair. Both passes below can reach the same pair, so its key is
+// measured once.
+function compareRows(a, b, where) {
+  const [ha, hb] = [a.ink.y1 - a.ink.y0, b.ink.y1 - b.ink.y0];
+  if (Math.max(ha, hb) > 2 * Math.min(ha, hb)) return;
+  if (b.ink.y0 - a.ink.y1 > 4 * Math.min(ha, hb) && b.rect.y0 - a.rect.y1 > unit) return;
+  const key = `guides ${a.name} | ${b.name}`;
+  if (guideSeen.has(key)) return;
+  guideSeen.add(key);
+  const edges = (k) => [k.ink.x0, centre(k.ink), k.ink.x1];
+  let shared = 0;
+  let closest = Infinity;
+  for (const p of a.kids) {
+    for (const q of b.kids) {
+      const [pe, qe] = [edges(p), edges(q)];
+      for (let e = 0; e < 3; e++) {
+        const d = U(Math.abs(pe[e] - qe[e]));
+        if (d <= ALIGN) shared++;
+        closest = Math.min(closest, d);
+      }
+    }
+  }
+  const m = {
+    kind: "guides",
+    key,
+    shared,
+    closest: Math.round(closest * 10) / 10,
+    cls: shared === 0 ? "no-guide" : "aligned",
+    text: `rows "${a.name}" and "${b.name}"${where} share no vertical guide: no left edge, centre or right edge lines up (closest pair ${fmt(closest)} apart; rows span ${fmt(U(a.ink.x0))}–${fmt(U(a.ink.x1))} and ${fmt(U(b.ink.x0))}–${fmt(U(b.ink.x1))})`,
+    draw: [...a.kids, ...b.kids].flatMap((k) => [
+      { guide: true, x: k.ink.x0, y0: a.ink.y0, y1: b.ink.y1 },
+      { guide: true, x: k.ink.x1 - 1, y0: a.ink.y0, y1: b.ink.y1 },
+    ]),
+    y: a.ink.y0,
+  };
+  measures.push(m);
+  if (shared === 0) {
+    findings.push(m);
+    for (const k of [...a.kids, ...b.kids]) for (const name of leafNames(k)) unguided.add(name);
+  }
+}
+
+// The widest-gap cut can read two close rows of items as columns when the
+// horizontal gutters are wider than the row gap, and then the rows are
+// never compared. Bands of children that overlap vertically are compared
+// directly, so no gutter width can hide a missing shared guide.
+function rowBands(items, where) {
+  const bands = [];
+  for (const it of [...items].sort((a, b) => a.ink.y0 - b.ink.y0 || a.ink.x0 - b.ink.x0)) {
+    const h = it.ink.y1 - it.ink.y0;
+    const band = bands.find((bd) => {
+      const overlap = Math.min(bd.ink.y1, it.ink.y1) - Math.max(bd.ink.y0, it.ink.y0);
+      return overlap > 0.5 * Math.min(h, bd.ink.y1 - bd.ink.y0);
+    });
+    if (band) {
+      band.items.push(it);
+      band.ink = unionBox(band.ink, it.ink);
+      band.rect = unionBox(band.rect, it.rect);
+    } else {
+      bands.push({ items: [it], ink: it.ink, rect: it.rect });
+    }
+  }
+  const rows = bands.filter((bd) => bd.items.length >= 2);
+  const bandNode = (bd) => ({
+    name: joinNames([...bd.items].sort((a, b) => a.ink.x0 - b.ink.x0).map((it) => it.name)),
+    kids: bd.items,
+    ink: bd.ink,
+    rect: bd.rect,
+  });
+  for (let i = 0; i + 1 < rows.length; i++) compareRows(bandNode(rows[i]), bandNode(rows[i + 1]), where);
+}
 
 function analyse(n, c, frame, frameName) {
   const where = c.root ? "" : ` in "${c.name}"`;
@@ -784,42 +881,7 @@ function analyse(n, c, frame, frameName) {
     for (let i = 0; i + 1 < kids.length; i++) {
       const [a, b] = [kids[i], kids[i + 1]];
       if (a.dir !== "row" || b.dir !== "row") continue;
-      // Related rows: of similar height, and close in ink or touching as
-      // layout boxes. A row of cards above a row of links is not a pair.
-      const [ha, hb] = [a.ink.y1 - a.ink.y0, b.ink.y1 - b.ink.y0];
-      if (Math.max(ha, hb) > 2 * Math.min(ha, hb)) continue;
-      if (b.ink.y0 - a.ink.y1 > 4 * Math.min(ha, hb) && b.rect.y0 - a.rect.y1 > unit) continue;
-      const edges = (k) => [k.ink.x0, centre(k.ink), k.ink.x1];
-      let shared = 0;
-      let closest = Infinity;
-      for (const p of a.kids) {
-        for (const q of b.kids) {
-          const [pe, qe] = [edges(p), edges(q)];
-          for (let e = 0; e < 3; e++) {
-            const d = U(Math.abs(pe[e] - qe[e]));
-            if (d <= ALIGN) shared++;
-            closest = Math.min(closest, d);
-          }
-        }
-      }
-      const m = {
-        kind: "guides",
-        key: `guides ${a.name} | ${b.name}`,
-        shared,
-        closest: Math.round(closest * 10) / 10,
-        cls: shared === 0 ? "no-guide" : "aligned",
-        text: `rows "${a.name}" and "${b.name}"${where} share no vertical guide: no left edge, centre or right edge lines up (closest pair ${fmt(closest)} apart; rows span ${fmt(U(a.ink.x0))}–${fmt(U(a.ink.x1))} and ${fmt(U(b.ink.x0))}–${fmt(U(b.ink.x1))})`,
-        draw: [...a.kids, ...b.kids].flatMap((k) => [
-          { guide: true, x: k.ink.x0, y0: a.ink.y0, y1: b.ink.y1 },
-          { guide: true, x: k.ink.x1 - 1, y0: a.ink.y0, y1: b.ink.y1 },
-        ]),
-        y: a.ink.y0,
-      };
-      measures.push(m);
-      if (shared === 0) {
-        findings.push(m);
-        for (const k of [...a.kids, ...b.kids]) for (const name of leafNames(k)) unguided.add(name);
-      }
+      compareRows(a, b, where);
     }
     // Centring: a part that sits almost, but not quite, centred.
     for (const k of kids) offCentre(k, frame, frameName, where);
@@ -871,6 +933,8 @@ for (const c of [screen, ...elements]) {
     if (top.dir !== "stack") offCentre(top, c.ink, frameName, "");
   }
   analyse(top, c, c.root || c.visible ? c.ink : top.ink, frameName);
+  // Rows of this container's own children, whatever groups the cut made.
+  rowBands(c.children, c.root ? "" : ` in "${c.name}"`);
 }
 
 // Near misses: an element and the nearest element stacked under it whose
@@ -891,21 +955,23 @@ for (const a of leaves) {
     ["right edges", a.ink.x1, b.ink.x1],
   ].map(([what, p, q]) => ({ what, d: U(Math.abs(p - q)), p, q }));
   const nearest = options.reduce((m, o) => (o.d < m.d ? o : m));
-  if (nearest.d > ALIGN && nearest.d <= NEAR && !(unguided.has(a.name) && unguided.has(b.name))) {
-    const m = {
-      kind: "near-miss",
-      key: `align ${a.name} | ${b.name}`,
-      values: [nearest.d],
-      text: `"${a.name}" and "${b.name}" below it almost align: their ${nearest.what} are ${fmt(nearest.d)} apart`,
-      draw: [
-        { guide: true, x: nearest.p, y0: a.ink.y0, y1: b.ink.y1 },
-        { guide: true, x: nearest.q, y0: a.ink.y0, y1: b.ink.y1 },
-      ],
-      y: a.ink.y0,
-    };
-    measures.push(m);
-    findings.push(m);
-  }
+  // Recorded however it lands, so a re-measure can compare before and
+  // after; only the near band is a finding.
+  const cls = nearest.d <= ALIGN ? "aligned" : nearest.d <= NEAR ? "near" : "off";
+  const m = {
+    kind: "near-miss",
+    key: `align ${a.name} | ${b.name}`,
+    values: [nearest.d],
+    cls,
+    text: `"${a.name}" and "${b.name}" below it almost align: their ${nearest.what} are ${fmt(nearest.d)} apart`,
+    draw: [
+      { guide: true, x: nearest.p, y0: a.ink.y0, y1: b.ink.y1 },
+      { guide: true, x: nearest.q, y0: a.ink.y0, y1: b.ink.y1 },
+    ],
+    y: a.ink.y0,
+  };
+  measures.push(m);
+  if (cls === "near" && !(unguided.has(a.name) && unguided.has(b.name))) findings.push(m);
 }
 
 findings.sort((a, b) => a.y - b.y);
