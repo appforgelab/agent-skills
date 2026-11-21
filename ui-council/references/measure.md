@@ -54,7 +54,8 @@ It reports:
 - **Gaps:** every vertical gap.
 
 Every centring and alignment pair is kept in `--json`, classed `flush`,
-`aligned`, `near` or `off`; only the `near` band is a finding. All
+`aligned`, `near`, `off` or `wide` (filling its frame, so it has no
+centre a reader would judge); only the `near` band is a finding. All
 thresholds are options; see `--help`.
 
 ## Scale
@@ -118,9 +119,10 @@ glance there. Drop the findings it explains.
 - After a change, re-run on the new shot and compare the same keys in
   `--json`: the recorded values say whether the relationship actually
   moved, even once it stops being a finding. A fix that overshot reads as
-  a bigger `off`, not as silence. A pair that drifted flush to an edge, or
-  apart past overlap, keeps its record too — so a missing key means the
-  element itself is gone, not that the relationship changed.
+  a bigger `off`, not as silence. A pair that drifted flush to an edge,
+  apart past overlap, or grew to fill its frame (`wide`), keeps its record
+  too — so a missing key means the element itself is gone, not that the
+  relationship changed.
 
 ## Limits
 

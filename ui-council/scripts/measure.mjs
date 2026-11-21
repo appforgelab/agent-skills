@@ -747,7 +747,10 @@ const centre = (b) => (b.x0 + b.x1) / 2;
 
 function offCentre(item, frame, frameName, where) {
   const w = item.ink.x1 - item.ink.x0;
-  if (w > 0.8 * (frame.x1 - frame.x0)) return;
+  // An item nearly filling its frame has no centre a reader would judge;
+  // it is still recorded, so widening past the cutoff cannot delete the
+  // key — only change its class.
+  const wide = w > 0.8 * (frame.x1 - frame.x0);
   const left = U(item.ink.x0 - frame.x0);
   const right = U(frame.x1 - item.ink.x1);
   const off = Math.abs(left - right) / 2;
@@ -755,7 +758,7 @@ function offCentre(item, frame, frameName, where) {
   // so the key survives a fix that drifts past an edge. Every
   // relationship is kept, however far off, so a re-measure can compare
   // before and after a fix even once it stops being a finding.
-  const cls = left <= ALIGN || right <= ALIGN ? "flush" : off <= ALIGN ? "aligned" : off <= NEAR ? "near" : "off";
+  const cls = wide ? "wide" : left <= ALIGN || right <= ALIGN ? "flush" : off <= ALIGN ? "aligned" : off <= NEAR ? "near" : "off";
   const y = (item.ink.y0 + item.ink.y1) / 2;
   const m = {
     kind: "off-centre",
@@ -830,14 +833,17 @@ function rowBands(items, where) {
   const bands = [];
   for (const it of [...items].sort((a, b) => a.ink.y0 - b.ink.y0 || a.ink.x0 - b.ink.x0)) {
     const h = it.ink.y1 - it.ink.y0;
-    // An item joins a band it overlaps vertically — but only a member of
-    // similar height: a sidebar or a divider spans several rows and would
-    // otherwise glue them into one band.
+    // An item joins a band through a member whose vertical span coincides
+    // with its own: more than half the taller one's height in overlap.
+    // A sidebar or a tall action spans several rows and overlaps each by
+    // less than half itself, so it cannot glue them into one band. The
+    // rule also bounds the height ratio: overlap never exceeds the
+    // shorter height, so max < 2 × min whenever it holds.
     const band = bands.find((bd) =>
       bd.items.some((m) => {
         const mh = m.ink.y1 - m.ink.y0;
         const overlap = Math.min(m.ink.y1, it.ink.y1) - Math.max(m.ink.y0, it.ink.y0);
-        return overlap > 0.5 * Math.min(h, mh) && Math.max(h, mh) <= 2 * Math.min(h, mh);
+        return overlap > 0.5 * Math.max(h, mh);
       })
     );
     if (band) {
@@ -965,34 +971,36 @@ for (const a of leaves) {
     if (Math.min(a.ink.x1, b.ink.x1) <= Math.max(a.ink.x0, b.ink.x0)) continue;
     if (!best || b.ink.y0 < best.ink.y0) best = b;
   }
-  // The nearest element below, overlapping or not: a pair that drifts
-  // apart horizontally keeps its record, only overlapping pairs can be
-  // findings.
-  const b = best ?? nearestBelow;
-  if (!b || U(b.ink.y0 - a.ink.y1) > 64) continue;
-  const options = [
-    ["left edges", a.ink.x0, b.ink.x0],
-    ["centres", (a.ink.x0 + a.ink.x1) / 2, (b.ink.x0 + b.ink.x1) / 2],
-    ["right edges", a.ink.x1, b.ink.x1],
-  ].map(([what, p, q]) => ({ what, d: U(Math.abs(p - q)), p, q }));
-  const nearest = options.reduce((m, o) => (o.d < m.d ? o : m));
-  // Recorded however it lands, so a re-measure can compare before and
-  // after; only the near band is a finding.
-  const cls = nearest.d <= ALIGN ? "aligned" : nearest.d <= NEAR ? "near" : "off";
-  const m = {
-    kind: "near-miss",
-    key: `align ${a.name} | ${b.name}`,
-    values: [nearest.d],
-    cls,
-    text: `"${a.name}" and "${b.name}" below it almost align: their ${nearest.what} are ${fmt(nearest.d)} apart`,
-    draw: [
-      { guide: true, x: nearest.p, y0: a.ink.y0, y1: b.ink.y1 },
-      { guide: true, x: nearest.q, y0: a.ink.y0, y1: b.ink.y1 },
-    ],
-    y: a.ink.y0,
-  };
-  measures.push(m);
-  if (best && cls === "near" && !(unguided.has(a.name) && unguided.has(b.name))) findings.push(m);
+  // Both partners are recorded when they differ: the nearest element
+  // below even without horizontal overlap, so a pair that drifts apart
+  // keeps its key, and the nearest overlapping one, the only pairing
+  // that can be a finding.
+  for (const b of new Set([best, nearestBelow])) {
+    if (!b || U(b.ink.y0 - a.ink.y1) > 64) continue;
+    const options = [
+      ["left edges", a.ink.x0, b.ink.x0],
+      ["centres", (a.ink.x0 + a.ink.x1) / 2, (b.ink.x0 + b.ink.x1) / 2],
+      ["right edges", a.ink.x1, b.ink.x1],
+    ].map(([what, p, q]) => ({ what, d: U(Math.abs(p - q)), p, q }));
+    const closest = options.reduce((m, o) => (o.d < m.d ? o : m));
+    // Recorded however it lands, so a re-measure can compare before and
+    // after; only the near band is a finding.
+    const cls = closest.d <= ALIGN ? "aligned" : closest.d <= NEAR ? "near" : "off";
+    const m = {
+      kind: "near-miss",
+      key: `align ${a.name} | ${b.name}`,
+      values: [closest.d],
+      cls,
+      text: `"${a.name}" and "${b.name}" below it almost align: their ${closest.what} are ${fmt(closest.d)} apart`,
+      draw: [
+        { guide: true, x: closest.p, y0: a.ink.y0, y1: b.ink.y1 },
+        { guide: true, x: closest.q, y0: a.ink.y0, y1: b.ink.y1 },
+      ],
+      y: a.ink.y0,
+    };
+    measures.push(m);
+    if (b === best && cls === "near" && !(unguided.has(a.name) && unguided.has(b.name))) findings.push(m);
+  }
 }
 
 findings.sort((a, b) => a.y - b.y);
