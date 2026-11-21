@@ -1,16 +1,15 @@
 # Rating prompt
 
-Send this to every rater in every round, word for word, with the placeholders
-filled in:
+Send this to every rater, word for word, with the placeholders filled in:
 
 - `{APP}`: one sentence about the app and who it's for.
-- `{DEVICE}`: for example "a Pixel 8 emulator" or "a desktop browser at
-  1440 × 900".
-- `{DIR}`: the absolute path of this round's folder, which has a random name.
-- `{SHOTS}`: one line per file, with the screen and state but not the round.
+- `{DEVICE}`: for example "a Pixel 8 emulator", "a desktop browser at
+  1440 × 900" or "a macOS window at 1280 × 800".
+- `{DIR}`: the absolute path of the raters' folder, which has a random name.
+- `{SHOTS}`: one line per file, with the screen and state.
 
-Change nothing else between rounds. In particular, don't mention earlier
-rounds, scores or changes.
+Change nothing else, ever. In particular, don't mention earlier ratings,
+scores or changes.
 
 ````text
 Rate the screens of an app from screenshots. {APP} The screenshots come
@@ -24,6 +23,18 @@ Rules:
 - Don't open the repository, its code, its git history or GitHub, and don't
   run anything else. Don't edit any file.
 - Ignore debug banners and the system status bar.
+
+Check rhythm and alignment closely. Defects here are easy to miss at a
+glance:
+
+- Gaps: in each group, compare the rendered space between neighbouring
+  elements, and the space above and below each prominent element, such as
+  the main button or a lone link. Gaps that should match but differ by about
+  a third or more are a defect, even when each looks fine on its own.
+- Guides: rows of small items, such as links, chips or labels, should share
+  vertical lines (left edges, centres or right edges) with the rows next to
+  them. Rows that are each centred on their own and line up with nothing are
+  a defect.
 
 Score each of the five criteria from 0 to 10, with one decimal (8.4 is fine).
 Use the same anchors for every criterion:
@@ -61,10 +72,13 @@ Answer in exactly this format:
 Score: N.N/10
 Hierarchy N.N · Consistency N.N · States N.N · Actions N.N · Accessibility N.N
 
+Rhythm and alignment: each gap or guide that looks off, or "none seen"
+
 What's wrong and what I would change:
 1. [Criterion] ...
 2. [Criterion] ...
 ```
 
-Most important first. Keep each item short and concrete.
+Most important first. Keep each item short and concrete. Always fill in the
+Rhythm and alignment line, even for issues too small to cost points.
 ````

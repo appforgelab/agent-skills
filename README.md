@@ -81,25 +81,25 @@ proposal, approval-gated.
 
 ### ui-council
 
-A panel of models rates screenshots of an app's screens without knowing what
-changed. The agent improves the UI between rounds, then shows each screen
-before and after, with the scores.
+A panel of models rates screenshots of an app's screens, blind. A
+measurement pass on the screenshots, which raters never see, checks the
+spacing rhythm and alignment that the eye misses. The agent merges both into
+a report: scores, what's wrong and suggested improvements. It never changes
+the app, so an outer loop can rate, fix and rate again.
 
-- **Use when:** you want screens scored, critiqued or improved.
+- **Use when:** you want screens scored and critiqued.
 - **Parameters:** all optional. The skill asks for any that are missing:
-    - **Platform:** `android` (default), `ios` or `web`.
+    - **Platform:** `web`, `desktop`, `android` or `ios`.
     - **Screens and states:** for example Settings when signed out, signed in,
       after an error, and with large text. You can also ask for the whole app.
     - **Raters:** `sol` and `opus` by default.
-    - **When to stop:** a number of rounds (default 1), or a target average
-      score, such as 9.0, with a round limit (default 3).
-    - **Mode:** improve (default) or rate only.
     - **Rubric:** the default criteria, or `ui-design`'s design rubric, with
       `DESIGN.md` identity.
-    - **Issue:** an existing issue whose decisions the changes must respect.
-- **Example:** `/ui-council android, Settings signed in and signed out, until
-  9.0`.
-- **Needs:** T3 Code, plus an emulator, a simulator or the browser preview.
+    - **Constraints:** decisions the suggestions must respect, for example
+      from an issue.
+- **Example:** `/ui-council android, Settings signed in and signed out`.
+- **Needs:** T3 Code and Node 18 or later, plus a way to capture the app: the
+  browser preview, an emulator or simulator, or a desktop window.
 
 ### ui-design
 
@@ -109,8 +109,8 @@ the rest of the app.
 
 - **Use when:** diagnosing or redesigning screens yourself, or scoring and
   improving them with a designer's rubric instead of generic taste.
-- **With:** `ui-council`, which supplies the blind raters and the rounds.
-- **Example:** `/ui-council onboarding, ui-design rubric, until 9.0`, or
+- **With:** `ui-council`, which supplies the blind raters.
+- **Example:** `/ui-council onboarding, ui-design rubric`, or
   alone: `redesign Settings to the design language, DESIGN.md first`.
 - **Needs:** nothing on its own; with `ui-council`, what ui-council needs.
 
