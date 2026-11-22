@@ -121,9 +121,14 @@ glance there. Drop the findings it explains.
   moved, even once it stops being a finding. A fix that overshot reads as
   a bigger `off`, not as silence. Every pair within reach is recorded,
   however it drifted — flush to an edge, apart past overlap, sideways to
-  another column, or grown to fill its frame (`wide`) — so a missing key
-  means an element left the page or moved out of reach, not that the
-  relationship changed.
+  another column, or grown to fill its frame (`wide`).
+- Keys hold still only while the elements and their grouping hold still.
+  Screenshot blocks are numbered by position and repeated tree labels are
+  told apart by order, so moving one element can renumber its neighbours,
+  and a grouped name such as `block 1 + block 2` changes when the cut
+  changes. When keys appear or vanish, match the elements across the two
+  runs by their ink boxes in `elements` — or read the overlay — before
+  drawing a conclusion; a changed key on its own is not evidence.
 
 ## Limits
 

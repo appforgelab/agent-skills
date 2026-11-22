@@ -859,12 +859,21 @@ function rowBands(items, where) {
     }
   }
   const rows = bands.filter((bd) => bd.items.length >= 2);
-  const bandNode = (bd) => ({
-    name: joinNames([...bd.items].sort((a, b) => a.ink.x0 - b.ink.x0).map((it) => it.name)),
-    kids: bd.items,
-    ink: bd.ink,
-    rect: bd.rect,
-  });
+  const bandNode = (bd) => {
+    // A member taller than the row — a big button, a control reaching
+    // toward the next row — must not stretch the band past the height
+    // gates in compareRows and hide the pair; the row's height is its
+    // typical member's, centred on the span the members share.
+    const heights = bd.items.map((it) => it.ink.y1 - it.ink.y0).sort((a, b) => a - b);
+    const h = heights[Math.floor(heights.length / 2)];
+    const c = (bd.span0 + bd.span1) / 2;
+    return {
+      name: joinNames([...bd.items].sort((a, b) => a.ink.x0 - b.ink.x0).map((it) => it.name)),
+      kids: bd.items,
+      ink: { x0: bd.ink.x0, x1: bd.ink.x1, y0: c - h / 2, y1: c + h / 2 },
+      rect: bd.rect,
+    };
+  };
   for (let i = 0; i + 1 < rows.length; i++) compareRows(bandNode(rows[i]), bandNode(rows[i + 1]), where);
 }
 
