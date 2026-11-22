@@ -874,7 +874,18 @@ function rowBands(items, where) {
       rect: bd.rect,
     };
   };
-  for (let i = 0; i + 1 < rows.length; i++) compareRows(bandNode(rows[i]), bandNode(rows[i + 1]), where);
+  // Each band pair is compared twice: with the typical-member boxes, and
+  // with the members' full union. When short members outnumber a taller
+  // one — an icon beside two text labels — the median is the label height
+  // and can gate the pair out on its own; the union box still compares
+  // it, as it did before medians existed. compareRows returns before it
+  // records when a pair is gated, so the second call can only compare
+  // pairs the first could not, never record one twice.
+  const unionNode = (bd) => ({ ...bandNode(bd), ink: bd.ink });
+  for (let i = 0; i + 1 < rows.length; i++) {
+    compareRows(bandNode(rows[i]), bandNode(rows[i + 1]), where);
+    compareRows(unionNode(rows[i]), unionNode(rows[i + 1]), where);
+  }
 }
 
 function analyse(n, c, frame, frameName) {
