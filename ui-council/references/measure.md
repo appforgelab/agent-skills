@@ -135,7 +135,9 @@ glance there. Drop the findings it explains.
   pass, and each column's own record stays in `--json`. Fixing one column
   can turn the band `aligned` and bring the other column's record out as a
   finding under a key not listed before: compare the `--json` keys, not
-  the findings list.
+  the findings list. Rows that look like separate columns aren't compared
+  as a pair at all, however close sideways, so their pair key can vanish
+  when a row moves into or out of a column.
 
 ## Limits
 
