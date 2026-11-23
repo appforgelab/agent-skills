@@ -983,12 +983,21 @@ function rowBands(items, where, top) {
   // over the first band and a footer under the second frame a staircase,
   // not columns. A lone row that drifted clear of the one above has no
   // partner either way, so it is still compared and its key survives.
-  // Rows on opposite sides of a zigzag cut are never a pair: the stack
-  // pass has already proved them separate columns, each with its own
-  // aligned rows, so no partner evidence is needed.
+  // Rows wholly on opposite sides of a zigzag cut are not a pair when the
+  // columns interleave right there: p's column goes on below p, by q's
+  // bottom, or q's column began above q, from p's top — give or take
+  // twice the gap between them. The stack pass has already proved both
+  // sides columns of aligned rows; the nearby item shows the pair sits
+  // inside them, not beside some distant chrome that happens to line up.
   const sides = zigzagSides(top);
-  const across = (p, q) =>
-    sides.some(([a, b]) => (a.has(p.items[0]) && b.has(q.items[0])) || (b.has(p.items[0]) && a.has(q.items[0])));
+  const across = (p, q) => {
+    const reach = 2 * Math.max(0, q.ink.y0 - p.ink.y1);
+    const near = (sp, sq) =>
+      [...sp].some((it) => !p.items.includes(it) && it.ink.y0 >= p.ink.y1 && it.ink.y0 <= q.ink.y1 + reach) ||
+      [...sq].some((it) => !q.items.includes(it) && it.ink.y1 <= q.ink.y0 && it.ink.y1 >= p.ink.y0 - reach);
+    const on = (bd, side) => bd.items.every((it) => side.has(it));
+    return sides.some(([a, b]) => (on(p, a) && on(q, b) && near(a, b)) || (on(p, b) && on(q, a) && near(b, a)));
+  };
   const overlapsX = (p, q) => Math.min(p.ink.x1, q.ink.x1) > Math.max(p.ink.x0, q.ink.x0);
   // Indices of the bands that overlap band i sideways but not band j.
   const partners = (i, j) => rows.flatMap((o, k) => (k !== i && overlapsX(o, rows[i]) && !overlapsX(o, rows[j]) ? [k] : []));
