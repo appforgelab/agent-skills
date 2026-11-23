@@ -1002,6 +1002,11 @@ for (const a of leaves) {
   // overlapping pairing can be a finding.
   for (const b of below) {
     if (U(b.ink.y0 - a.ink.y1) > 64) continue;
+    // Sideways reach is twice the vertical one: a pair drifting into a
+    // neighbouring column is still worth re-measuring, the far side of
+    // the page is not, and a dense grid must not pair every leaf with
+    // every leaf below it.
+    if (U(Math.max(a.ink.x0, b.ink.x0) - Math.min(a.ink.x1, b.ink.x1)) > 128) continue;
     const options = [
       ["left edges", a.ink.x0, b.ink.x0],
       ["centres", (a.ink.x0 + a.ink.x1) / 2, (b.ink.x0 + b.ink.x1) / 2],

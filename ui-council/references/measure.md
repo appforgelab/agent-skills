@@ -119,9 +119,11 @@ glance there. Drop the findings it explains.
 - After a change, re-run on the new shot and compare the same keys in
   `--json`: the recorded values say whether the relationship actually
   moved, even once it stops being a finding. A fix that overshot reads as
-  a bigger `off`, not as silence. Every pair within reach is recorded,
-  however it drifted — flush to an edge, apart past overlap, sideways to
-  another column, or grown to fill its frame (`wide`).
+  a bigger `off`, not as silence. Every pair within reach is recorded —
+  64 units below, 128 to the side — however it drifted: flush to an edge,
+  apart past overlap, sideways into a neighbouring column, or grown to
+  fill its frame (`wide`). A fix that moves a pair past the sideways
+  reach drops its key: match the elements by their ink boxes instead.
 - Keys hold still only while the elements and their grouping hold still.
   Screenshot blocks are numbered by position and repeated tree labels are
   told apart by order, so moving one element can renumber its neighbours,
