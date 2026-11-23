@@ -905,10 +905,6 @@ function compareRows(a, b, where) {
   }
 }
 
-// The widest-gap cut can read two close rows of items as columns when the
-// horizontal gutters are wider than the row gap, and then the rows are
-// never compared. Bands of children that overlap vertically are compared
-// directly, so no gutter width can hide a missing shared guide.
 // The two sides of every zigzag cut under n, as sets of the items cut.
 function zigzagSides(n) {
   const items = (k) => (k.leaf ? [k.leaf] : k.kids.flatMap(items));
@@ -916,6 +912,10 @@ function zigzagSides(n) {
   return n.zigzag ? [n.kids.map((k) => new Set(items(k))), ...below] : below;
 }
 
+// The widest-gap cut can read two close rows of items as columns when the
+// horizontal gutters are wider than the row gap, and then the rows are
+// never compared. Bands of children that overlap vertically are compared
+// directly, so no gutter width can hide a missing shared guide.
 function rowBands(items, where, top) {
   const bands = [];
   for (const it of [...items].sort((a, b) => a.ink.y0 - b.ink.y0 || a.ink.x0 - b.ink.x0)) {
