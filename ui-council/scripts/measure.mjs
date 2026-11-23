@@ -779,8 +779,8 @@ function build(items) {
   if (items.length === 1) return { leaf: items[0], kids: [], ink, rect, name: items[0].name };
   const h = widestCut(items, "stack");
   const v = widestCut(items, "row");
-  // A vertical cut whose two sides zigzag — rows alternating left and
-  // right, as in a two-sided timeline — wins first, whatever the gap
+  // A vertical cut whose two sides zigzag — interleaved columns, as in a
+  // two-sided timeline — wins first, whatever the gap
   // widths: it need not be the widest, since a gap inside a row (an item
   // and its trailing icon) can be wider than the gutter. Otherwise rows first: ragged rows leave
   // accidental vertical gaps, so a vertical cut must be clearly wider (a

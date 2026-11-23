@@ -34,9 +34,9 @@ later with no dependencies.
    its content, or the cells of a grid, keep their own rhythm. So do
    interleaved columns, such as a two-sided timeline or alternating feature
    sections: when each side holds at least two rows lined up on one edge,
-   and no row shares a line with the other side, each side is measured on
-   its own, however narrow the gutter. With fewer rows a side, such as
-   left, right, left, the rows are measured as one stack.
+   the two sides run alongside each other, and no row shares a line with
+   the other side, each side is measured on its own, however narrow the
+   gutter.
 
 It reports:
 
