@@ -1046,20 +1046,22 @@ const keptRows = findings.map((f) => rowLeaves.get(f)).filter(Boolean);
 
 // A near miss is already reported when one kept guide finding has the two
 // elements inside members of its two rows, and the elements moved with
-// their members: on some edge — left, centre or right — the elements are
-// off by the members' own offset. A centred label in a shifted chip moves
-// by the chip's offset on centres. A near miss inside one member, or
-// between contents that don't follow their members (unequal padding in
-// stacked cards), is a defect of its own.
-const EDGES = [(b) => b.x0, centre, (b) => b.x1];
-function explained(a, b) {
+// their members: on the near miss's own edge, both sit at the same inset
+// in their members, or both are centred in them — a centred label in a
+// shifted chip lands wherever its text width puts its edges. A near miss
+// inside one member, or between contents that don't follow their members
+// (unequal padding in stacked cards), is a defect of its own.
+const EDGE = { "left edges": (b) => b.x0, centres: centre, "right edges": (b) => b.x1 };
+function explained(a, b, closest) {
+  const edge = EDGE[closest.what];
+  const centred = (e, mm) => U(Math.abs(centre(e.ink) - centre(mm.box))) <= ALIGN;
   for (const [upper, lower] of keptRows) {
     for (const [ra, rb] of [[upper, lower], [lower, upper]]) {
       const ma = ra.find((mm) => mm.leaves.has(a.name));
       const mb = rb.find((mm) => mm.leaves.has(b.name));
       if (!ma || !mb) continue;
-      const moved = (edge) => U(Math.abs(edge(b.ink) - edge(a.ink) - (edge(mb.box) - edge(ma.box)))) <= ALIGN;
-      if (EDGES.some(moved)) return true;
+      const sameInset = U(Math.abs(closest.q - closest.p - (edge(mb.box) - edge(ma.box)))) <= ALIGN;
+      if (sameInset || (centred(a, ma) && centred(b, mb))) return true;
     }
   }
   return false;
@@ -1111,7 +1113,7 @@ for (const a of leaves) {
       y: a.ink.y0,
     };
     measures.push(m);
-    if (b === best && cls === "near" && !explained(a, b)) findings.push(m);
+    if (b === best && cls === "near" && !explained(a, b, closest)) findings.push(m);
   }
 }
 
