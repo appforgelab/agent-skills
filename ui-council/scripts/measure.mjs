@@ -774,13 +774,14 @@ function zigzag(v) {
 }
 
 // Interleaved columns framed by full-width rows, such as a two-sided
-// timeline between a header and a footer: no vertical cut crosses the
+// timeline between header rows and a footer: no vertical cut crosses the
 // whole node, and the gaps between entries can be wider than those to the
-// frame, so the widest-gap cut would slice through the zigzag. Peel up to
-// two slices off each end; if the rest zigzags and every peeled slice
-// reaches across its gutter, as a frame does, return the cut at the edge
-// of the rest, so it is kept whole.
-const PEELS = [[1, 0], [0, 1], [1, 1], [2, 0], [0, 2], [2, 1], [1, 2], [2, 2]];
+// frame, so the widest-gap cut would slice through the zigzag. Inside the
+// gutter only the frame's slices reach across, so it is where the fewest
+// horizontal slices cover x. The slices covering it must be a run at the
+// top and a run at the bottom; if the slices between them (four at
+// least) zigzag across that gutter, return the cut at their edge, so they
+// are kept whole.
 function framedZigzag(items) {
   const cuts = clearCuts(items, "stack");
   if (cuts.length < 4) return null;
@@ -788,27 +789,38 @@ function framedZigzag(items) {
   const ends = [0, ...cuts.map((c) => c.i), sorted.length];
   const n = ends.length - 1;
   const boxes = ends.slice(1).map((e, k) => sorted.slice(ends[k], e).map((it) => it.ink).reduce(unionBox));
-  // Every slice of a zigzag lies wholly on one side, so the rest's slices
-  // must leave a vertical gap that every peeled slice covers: a cheap test
-  // before the full one.
-  const framed = (top, bottom, peeled) => {
-    const spans = boxes.slice(top, n - bottom).map((b) => [b.x0, b.x1]).sort((a, b) => a[0] - b[0]);
-    let end = spans[0][1];
-    for (const [x0, x1] of spans.slice(1)) {
-      if (x0 >= end && peeled.every((k) => boxes[k].x0 <= end && boxes[k].x1 >= x0)) return true;
-      end = Math.max(end, x1);
-    }
-    return false;
-  };
-  for (const [top, bottom] of PEELS) {
-    if (n - top - bottom < 4) continue;
-    const peeled = [...Array(top).keys(), ...Array.from({ length: bottom }, (_, k) => n - 1 - k)];
-    if (!framed(top, bottom, peeled)) continue;
-    const zig = clearCuts(sorted.slice(ends[top], ends[n - bottom]), "row").find(zigzag);
+  // Sweep the slices' extents: x ranges covered by the fewest slices, each
+  // with slices wholly on either side of it.
+  const delta = new Map();
+  for (const b of boxes) {
+    delta.set(b.x0, (delta.get(b.x0) ?? 0) + 1);
+    delta.set(b.x1, (delta.get(b.x1) ?? 0) - 1);
+  }
+  const xs = [...delta.keys()].sort((a, b) => a - b);
+  const leftmost = Math.min(...boxes.map((b) => b.x1));
+  const rightmost = Math.max(...boxes.map((b) => b.x0));
+  let least = Infinity;
+  let gutters = [];
+  for (let k = 0, count = 0; k + 1 < xs.length; k++) {
+    count += delta.get(xs[k]);
+    const [g0, g1] = [xs[k], xs[k + 1]];
+    if (leftmost > g0 || rightmost < g1) continue;
+    if (count < least) [least, gutters] = [count, []];
+    if (count === least) gutters.push([g0, g1]);
+  }
+  const covering = (g0, g1) => boxes.flatMap((b, k) => (b.x0 <= g0 && b.x1 >= g1 ? [k] : []));
+  if (least === 0 || least === Infinity) return null;
+  for (const [g0, g1] of gutters) {
+    const frame = covering(g0, g1);
+    const top = frame.findIndex((k, j) => k !== j);
+    const head = top === -1 ? frame.length : top;
+    const tail = frame.length - head;
+    if (frame.slice(head).some((k, j) => k !== n - tail + j) || n - frame.length < 4) continue;
+    const zig = clearCuts(sorted.slice(ends[head], ends[n - tail]), "row").find(zigzag);
     if (!zig) continue;
     const x1 = zig.sorted[zig.i].ink.x0;
     const x0 = x1 - zig.gap;
-    if (peeled.every((k) => boxes[k].x0 <= x0 && boxes[k].x1 >= x1)) return top > 0 ? cuts[top - 1] : cuts[n - bottom - 1];
+    if (frame.every((k) => boxes[k].x0 <= x0 && boxes[k].x1 >= x1)) return head > 0 ? cuts[head - 1] : cuts[n - tail - 1];
   }
   return null;
 }
