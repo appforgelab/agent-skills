@@ -921,16 +921,18 @@ function rowBands(items, where) {
   // to different columns: nobody compares their guides, and the cut
   // compares each column's own rows. Two bands that don't overlap sideways
   // are skipped when they sit beyond the sideways reach, or when each has
-  // another band above or below it in its own column — a column, however
-  // narrow its gutter. A lone row that drifted clear of the one above has
-  // no such partner, so it is still compared and its key survives the drift.
+  // another band above or below it in its own column — one that overlaps
+  // it sideways but not the other band: a column, however narrow its
+  // gutter. A full-width header or footer overlaps both, so it is nobody's
+  // column partner. A lone row that drifted clear of the one above has no
+  // partner, so it is still compared and its key survives the drift.
   const overlapsX = (p, q) => Math.min(p.ink.x1, q.ink.x1) > Math.max(p.ink.x0, q.ink.x0);
-  const inColumn = (bd) => rows.some((o) => o !== bd && overlapsX(o, bd));
+  const inColumn = (bd, other) => rows.some((o) => o !== bd && overlapsX(o, bd) && !overlapsX(o, other));
   for (let i = 0; i + 1 < rows.length; i++) {
     const [p, q] = [rows[i], rows[i + 1]];
     if (!overlapsX(p, q)) {
       const apart = U(Math.max(p.ink.x0, q.ink.x0) - Math.min(p.ink.x1, q.ink.x1));
-      if (apart > SIDE_REACH || (inColumn(p) && inColumn(q))) continue;
+      if (apart > SIDE_REACH || (inColumn(p, q) && inColumn(q, p))) continue;
     }
     compareRows(bandNode(rows[i]), bandNode(rows[i + 1]), where);
     compareRows(unionNode(rows[i]), unionNode(rows[i + 1]), where);
