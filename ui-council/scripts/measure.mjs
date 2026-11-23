@@ -779,6 +779,9 @@ function offCentre(item, frame, frameName, where) {
 
 const unguided = new Set();
 const guideSeen = new Set();
+// Per guides record, the rows' leaf names and class: two records over the
+// same rows through different groupings dedupe at the findings stage.
+const guideRows = new Map();
 
 // Two stacked rows should share at least one vertical guide: a left edge,
 // centre or right edge. Related rows are of similar height, and close in
@@ -805,19 +808,25 @@ function compareRows(a, b, where) {
       }
     }
   }
+  const cls = shared === 0 ? "no-guide" : "aligned";
+  // The overlay guides and sort position follow the rows' real extent,
+  // not the comparison boxes: a band's box is its typical member, its
+  // members may reach further.
+  const [y0, y1] = [(a.span ?? a.ink).y0, (b.span ?? b.ink).y1];
   const m = {
     kind: "guides",
     key,
     shared,
     closest: Math.round(closest * 10) / 10,
-    cls: shared === 0 ? "no-guide" : "aligned",
+    cls,
     text: `rows "${a.name}" and "${b.name}"${where} share no vertical guide: no left edge, centre or right edge lines up (closest pair ${fmt(closest)} apart; rows span ${fmt(U(a.ink.x0))}–${fmt(U(a.ink.x1))} and ${fmt(U(b.ink.x0))}–${fmt(U(b.ink.x1))})`,
     draw: [...a.kids, ...b.kids].flatMap((k) => [
-      { guide: true, x: k.ink.x0, y0: a.ink.y0, y1: b.ink.y1 },
-      { guide: true, x: k.ink.x1 - 1, y0: a.ink.y0, y1: b.ink.y1 },
+      { guide: true, x: k.ink.x0, y0, y1 },
+      { guide: true, x: k.ink.x1 - 1, y0, y1 },
     ]),
-    y: a.ink.y0,
+    y: y0,
   };
+  guideRows.set(m, [leafNames(a).sort(), leafNames(b).sort(), cls]);
   measures.push(m);
   if (shared === 0) {
     findings.push(m);
@@ -872,6 +881,8 @@ function rowBands(items, where) {
       kids: bd.items,
       ink: { x0: bd.ink.x0, x1: bd.ink.x1, y0: c - h / 2, y1: c + h / 2 },
       rect: bd.rect,
+      // The members' full extent, for overlay guides and sort position.
+      span: bd.ink,
     };
   };
   // Each band pair is compared twice: with the typical-member boxes, and
@@ -1033,6 +1044,33 @@ for (const a of leaves) {
   }
 }
 
+// One defect can surface twice when the stack pass and the band pass
+// catch the same two rows through different groupings — one keeps a
+// spanning control in the row, the other does not — recording it under
+// two keys. Keep the band pass's record: it groups by vertical overlap,
+// not by the cut, so its key survives a cut change.
+const sameRows = (p, q) =>
+  p[2] === q[2] &&
+  (p[0].every((n) => q[0].includes(n)) || q[0].every((n) => p[0].includes(n))) &&
+  (p[1].every((n) => q[1].includes(n)) || q[1].every((n) => p[1].includes(n)));
+const keptFindings = [];
+const sigs = [];
+for (const f of findings) {
+  const sig = guideRows.get(f);
+  if (!sig) {
+    keptFindings.push(f);
+    continue;
+  }
+  const i = sigs.findIndex((s) => sameRows(s, sig));
+  if (i < 0) {
+    keptFindings.push(f);
+    sigs.push(sig);
+  } else {
+    keptFindings[i] = f;
+  }
+}
+findings.length = 0;
+findings.push(...keptFindings);
 findings.sort((a, b) => a.y - b.y);
 findings.forEach((f, i) => (f.n = i + 1));
 
