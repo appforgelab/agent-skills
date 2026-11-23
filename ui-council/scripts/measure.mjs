@@ -779,12 +779,12 @@ function build(items) {
   if (items.length === 1) return { leaf: items[0], kids: [], ink, rect, name: items[0].name };
   const h = widestCut(items, "stack");
   const v = widestCut(items, "row");
-  // A vertical cut whose two sides zigzag — interleaved columns, as in a
-  // two-sided timeline — wins first, whatever the gap
-  // widths: it need not be the widest, since a gap inside a row (an item
-  // and its trailing icon) can be wider than the gutter. Otherwise rows first: ragged rows leave
-  // accidental vertical gaps, so a vertical cut must be clearly wider (a
-  // sidebar, a column gutter) to win.
+  // A vertical cut whose two sides zigzag — interleaved columns, as in a two-
+  // sided timeline — wins first, whatever the gap widths: it need not be the
+  // widest, since a gap inside a row (an item and its trailing icon) can be
+  // wider than the gutter. Otherwise rows first: ragged rows leave accidental
+  // vertical gaps, so a vertical cut must be clearly wider (a sidebar, a
+  // column gutter) to win.
   const zig = h && v ? clearCuts(items, "row").find(zigzag) : null;
   const cut = zig ?? (h && (!v || v.gap <= 2 * h.gap) ? h : v);
   let node;
