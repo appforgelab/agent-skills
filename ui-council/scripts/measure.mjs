@@ -742,15 +742,31 @@ const joinNames = (names) =>
 // same row differently per pass and defeat the dedupe.
 const members = (n) => (n.span ? n.kids.map((k) => k.name) : leafNames(n)).sort();
 
-// Two sides of a vertical cut zigzag when each holds rows of its own, the
-// sides span the same height, and no item on one side shares a line with
-// any on the other: the rows alternate sides instead of running across.
-// Stacking them would compare each row with the other side's next one.
-// Aligned rows (a form, a grid) overlap across the cut; a lone drifted row
-// is one row; a staircase's sides don't span the same height.
+// The row boxes of a set of items: split at every clear horizontal cut.
+function rowBoxes(items) {
+  const cuts = clearCuts(items, "stack");
+  if (cuts.length === 0) return [items.map((k) => k.ink).reduce(unionBox)];
+  const { sorted } = cuts[0];
+  const ends = [0, ...cuts.map((c) => c.i), sorted.length];
+  return ends.slice(1).map((e, j) => sorted.slice(ends[j], e).map((k) => k.ink).reduce(unionBox));
+}
+
+// Two sides of a vertical cut zigzag when each is a column of rows — two or
+// more rows lined up on their left or right edge, within the near-miss
+// band — the sides span the same height, and no item on one side shares a
+// line with any on the other: the rows alternate sides instead of running
+// across. Stacking them would compare each row with the other side's next
+// one. Aligned rows (a form, a grid) overlap across the cut; a lone drifted
+// row is one row; a staircase's sides don't span the same height; scattered
+// items line up on no edge.
 function zigzag(v) {
   const [a, b] = [v.sorted.slice(0, v.i), v.sorted.slice(v.i)];
-  if (!widestCut(a, "stack") || !widestCut(b, "stack")) return false;
+  const column = (side) => {
+    const rows = rowBoxes(side);
+    const spread = (edge) => U(Math.max(...rows.map(edge)) - Math.min(...rows.map(edge)));
+    return rows.length >= 2 && (spread((r) => r.x0) <= NEAR || spread((r) => r.x1) <= NEAR);
+  };
+  if (!column(a) || !column(b)) return false;
   const span = (side) => side.map((k) => k.ink).reduce(unionBox);
   const [sa, sb] = [span(a), span(b)];
   if (Math.min(sa.y1, sb.y1) <= Math.max(sa.y0, sb.y0)) return false;
@@ -763,11 +779,13 @@ function build(items) {
   if (items.length === 1) return { leaf: items[0], kids: [], ink, rect, name: items[0].name };
   const h = widestCut(items, "stack");
   const v = widestCut(items, "row");
-  // Rows first: ragged rows leave accidental vertical gaps, so a vertical
-  // cut must be clearly wider (a sidebar, a column gutter) to win — unless
-  // some vertical cut, not necessarily the widest, splits two sides that
-  // zigzag: chat bubbles left and right, a two-sided timeline.
-  const zig = h && v && v.gap <= 2 * h.gap ? clearCuts(items, "row").find(zigzag) : null;
+  // A vertical cut whose two sides zigzag — chat bubbles left and right, a
+  // two-sided timeline — wins first, whatever the gap widths: it need not
+  // be the widest, since a gap inside a row (a bubble and its tick) can be
+  // wider than the gutter. Otherwise rows first: ragged rows leave
+  // accidental vertical gaps, so a vertical cut must be clearly wider (a
+  // sidebar, a column gutter) to win.
+  const zig = h && v ? clearCuts(items, "row").find(zigzag) : null;
   const cut = zig ?? (h && (!v || v.gap <= 2 * h.gap) ? h : v);
   let node;
   if (cut) {
