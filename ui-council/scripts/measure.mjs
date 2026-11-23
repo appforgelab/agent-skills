@@ -983,24 +983,32 @@ function rowBands(items, where, top) {
   // over the first band and a footer under the second frame a staircase,
   // not columns. A lone row that drifted clear of the one above has no
   // partner either way, so it is still compared and its key survives.
-  // Rows wholly on opposite sides of a zigzag cut are not a pair when both
-  // columns go on near them: each row has another row of its own side
-  // strictly above or below it, within the four row heights compareRows
-  // reaches. The stack pass has already proved both sides columns of
-  // aligned rows; the nearby rows show the pair sits inside them, not
-  // beside a distant control that happens to line up.
+  // Rows wholly on opposite sides of a zigzag cut are not a pair when the
+  // two columns interleave right there: each row has another row of its
+  // own side strictly above or below it, within the four row heights
+  // compareRows reaches, and the two local columns — each row extended
+  // by those neighbours — overlap vertically. The stack pass has already
+  // proved both sides columns of aligned rows; the local overlap shows the
+  // pair sits inside them, not on a staircase or beside a distant control
+  // that happens to line up.
   const sides = zigzagSides(top);
   const across = (p, q) => {
     const reach = 4 * Math.min(p.ink.y1 - p.ink.y0, q.ink.y1 - q.ink.y0);
-    const goesOn = (bd, side) =>
-      [...side].some((it) => {
+    // bd's vertical span with its nearby same-side rows, or null if none.
+    const local = (bd, side) => {
+      const near = [...side].filter((it) => {
         const d = Math.max(it.ink.y0 - bd.ink.y1, bd.ink.y0 - it.ink.y1);
-        return d >= 0 && d <= reach && (it.ink.y0 >= bd.ink.y1 || it.ink.y1 <= bd.ink.y0);
+        return d >= 0 && d <= reach;
       });
+      if (near.length === 0) return null;
+      return [Math.min(bd.ink.y0, ...near.map((it) => it.ink.y0)), Math.max(bd.ink.y1, ...near.map((it) => it.ink.y1))];
+    };
     const on = (bd, side) => bd.items.every((it) => side.has(it));
-    return sides.some(
-      ([a, b]) => ((on(p, a) && on(q, b)) || (on(p, b) && on(q, a))) && goesOn(p, on(p, a) ? a : b) && goesOn(q, on(q, a) ? a : b)
-    );
+    return sides.some(([a, b]) => {
+      if (!((on(p, a) && on(q, b)) || (on(p, b) && on(q, a)))) return false;
+      const [lp, lq] = [local(p, on(p, a) ? a : b), local(q, on(q, a) ? a : b)];
+      return lp && lq && Math.min(lp[1], lq[1]) > Math.max(lp[0], lq[0]);
+    });
   };
   const overlapsX = (p, q) => Math.min(p.ink.x1, q.ink.x1) > Math.max(p.ink.x0, q.ink.x0);
   // Indices of the bands that overlap band i sideways but not band j.
