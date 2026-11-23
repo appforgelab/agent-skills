@@ -131,6 +131,11 @@ glance there. Drop the findings it explains.
   changes. When keys appear or vanish, match the elements across the two
   runs by their ink boxes in `elements` — or read the overlay — before
   drawing a conclusion; a changed key on its own is not evidence.
+- A row pair across side-by-side columns is reported once, by the band
+  pass, and each column's own record stays in `--json`. Fixing one column
+  can turn the band `aligned` and bring the other column's record out as a
+  finding under a key not listed before: compare the `--json` keys, not
+  the findings list.
 
 ## Limits
 

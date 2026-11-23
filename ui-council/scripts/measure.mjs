@@ -718,6 +718,15 @@ function leafNames(n) {
   return kids ? kids.flatMap(leafNames) : [n.name];
 }
 
+// Names of the element-tree leaves under n, however it was grouped: the
+// level the near-miss pass works at. leafNames stops at a cut node's leaf
+// marker, so it can't serve here without changing the names build gives.
+function treeLeaves(n) {
+  const e = n.leaf ?? n;
+  if (e.kids) return e.kids.flatMap(treeLeaves);
+  return e.children?.length ? e.children.flatMap(treeLeaves) : [e.name];
+}
+
 const joinNames = (names) =>
   names.length <= 3 ? names.join(" + ") : `${names[0]} + … + ${names.at(-1)} (${names.length})`;
 
@@ -785,9 +794,12 @@ function offCentre(item, frame, frameName, where) {
 
 const unguided = new Set();
 const guideSeen = new Set();
-// Per guides record, the rows' leaf names and class: two records over the
-// same rows through different groupings dedupe at the findings stage.
+// Per guides finding: the rows' members at the container's level and
+// whether the band pass made it, so two findings over the same rows
+// through different groupings dedupe at the findings stage.
 const guideRows = new Map();
+// Per guides finding: the element-tree leaves of both rows, so a kept
+// finding hides the near misses it already reports.
 const rowLeaves = new Map();
 
 // Two stacked rows should share at least one vertical guide: a left edge,
@@ -833,10 +845,12 @@ function compareRows(a, b, where) {
     ]),
     y: y0,
   };
-  guideRows.set(m, [members(a), members(b), cls, Boolean(a.span)]);
   measures.push(m);
-  rowLeaves.set(m, [...a.kids, ...b.kids].flatMap(leafNames));
-  if (shared === 0) findings.push(m);
+  if (shared === 0) {
+    findings.push(m);
+    guideRows.set(m, [members(a), members(b), Boolean(a.span)]);
+    rowLeaves.set(m, [...a.kids, ...b.kids].flatMap(treeLeaves));
+  }
 }
 
 // The widest-gap cut can read two close rows of items as columns when the
@@ -899,6 +913,10 @@ function rowBands(items, where) {
   // pairs the first could not, never record one twice.
   const unionNode = (bd) => ({ ...bandNode(bd), ink: bd.ink });
   for (let i = 0; i + 1 < rows.length; i++) {
+    // Consecutive bands from side-by-side columns with staggered rows don't
+    // overlap horizontally: nobody compares their guides. The cut compares
+    // each column's own rows.
+    if (Math.min(rows[i].ink.x1, rows[i + 1].ink.x1) <= Math.max(rows[i].ink.x0, rows[i + 1].ink.x0)) continue;
     compareRows(bandNode(rows[i]), bandNode(rows[i + 1]), where);
     compareRows(unionNode(rows[i]), unionNode(rows[i + 1]), where);
   }
@@ -1008,13 +1026,12 @@ for (const c of [screen, ...elements]) {
 // so its key survives a cut change. Only the records kept here hide near
 // misses between their members.
 const sameRows = (p, q) =>
-  p[2] === q[2] &&
   (p[0].every((n) => q[0].includes(n)) || q[0].every((n) => p[0].includes(n))) &&
   (p[1].every((n) => q[1].includes(n)) || q[1].every((n) => p[1].includes(n)));
-const bandSigs = findings.map((f) => guideRows.get(f)).filter((s) => s?.[3]);
+const bandSigs = findings.map((f) => guideRows.get(f)).filter((s) => s?.[2]);
 const covered = (f) => {
   const s = guideRows.get(f);
-  return s && !s[3] && bandSigs.some((b) => sameRows(b, s));
+  return s && !s[2] && bandSigs.some((b) => sameRows(b, s));
 };
 const keptFindings = findings.filter((f) => !covered(f));
 findings.length = 0;
