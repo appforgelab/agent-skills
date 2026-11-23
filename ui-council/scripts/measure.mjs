@@ -776,35 +776,41 @@ function zigzag(v) {
 // Interleaved columns framed by full-width rows, such as a two-sided
 // timeline between a header and a footer: no vertical cut crosses the
 // whole node, and the gaps between entries can be wider than those to the
-// frame, so the widest-gap cut would slice through the zigzag. A framed
-// run is a stretch of horizontal slices (four at least: two rows a side)
-// whose extents leave a vertical gap, bounded at each end by the node's
-// edge or by a slice reaching across that gap. Return the cut at the edge
-// of the largest one whose items zigzag, so the run is kept whole.
-function zigzagRun(items) {
+// frame, so the widest-gap cut would slice through the zigzag. Peel up to
+// two slices off each end; if the rest zigzags and every peeled slice
+// reaches across its gutter, as a frame does, return the cut at the edge
+// of the rest, so it is kept whole.
+const PEELS = [[1, 0], [0, 1], [1, 1], [2, 0], [0, 2], [2, 1], [1, 2], [2, 2]];
+function framedZigzag(items) {
   const cuts = clearCuts(items, "stack");
   if (cuts.length < 4) return null;
   const { sorted } = cuts[0];
   const ends = [0, ...cuts.map((c) => c.i), sorted.length];
+  const n = ends.length - 1;
   const boxes = ends.slice(1).map((e, k) => sorted.slice(ends[k], e).map((it) => it.ink).reduce(unionBox));
-  // Merge a slice's extent into disjoint spans: two or more leave a gap.
-  const add = (spans, b) => {
-    const touching = spans.filter(([x0, x1]) => x0 < b.x1 && b.x0 < x1);
-    const merged = touching.reduce(([a, c], [x0, x1]) => [Math.min(a, x0), Math.max(c, x1)], [b.x0, b.x1]);
-    return [...spans.filter((sp) => !touching.includes(sp)), merged];
+  // Every slice of a zigzag lies wholly on one side, so the rest's slices
+  // must leave a vertical gap that every peeled slice covers: a cheap test
+  // before the full one.
+  const framed = (top, bottom, peeled) => {
+    const spans = boxes.slice(top, n - bottom).map((b) => [b.x0, b.x1]).sort((a, b) => a[0] - b[0]);
+    let end = spans[0][1];
+    for (const [x0, x1] of spans.slice(1)) {
+      if (x0 >= end && peeled.every((k) => boxes[k].x0 <= end && boxes[k].x1 >= x0)) return true;
+      end = Math.max(end, x1);
+    }
+    return false;
   };
-  let best = null;
-  for (let i = 0; i + 4 <= boxes.length; i++) {
-    let spans = [[boxes[i].x0, boxes[i].x1]];
-    let j = i + 1;
-    for (let next; j < boxes.length && (next = add(spans, boxes[j])).length >= 2; j++) spans = next;
-    if (j - i < 4 || (i === 0 && j === boxes.length)) continue;
-    if (i > 0 && add(spans, boxes[i - 1]).length >= 2) continue;
-    const n = ends[j] - ends[i];
-    if ((!best || n > best.n) && clearCuts(sorted.slice(ends[i], ends[j]), "row").some(zigzag)) best = { n, i, j };
+  for (const [top, bottom] of PEELS) {
+    if (n - top - bottom < 4) continue;
+    const peeled = [...Array(top).keys(), ...Array.from({ length: bottom }, (_, k) => n - 1 - k)];
+    if (!framed(top, bottom, peeled)) continue;
+    const zig = clearCuts(sorted.slice(ends[top], ends[n - bottom]), "row").find(zigzag);
+    if (!zig) continue;
+    const x1 = zig.sorted[zig.i].ink.x0;
+    const x0 = x1 - zig.gap;
+    if (peeled.every((k) => boxes[k].x0 <= x0 && boxes[k].x1 >= x1)) return top > 0 ? cuts[top - 1] : cuts[n - bottom - 1];
   }
-  if (!best) return null;
-  return best.i > 0 ? cuts[best.i - 1] : cuts[best.j - 1];
+  return null;
 }
 
 function build(items) {
@@ -822,7 +828,7 @@ function build(items) {
   // framed zigzag: its edge is cut first.
   const zig = h && v ? clearCuts(items, "row").find(zigzag) : null;
   const rows = h && (!v || v.gap <= 2 * h.gap);
-  const cut = zig ?? (rows ? zigzagRun(items) ?? h : v);
+  const cut = zig ?? (rows ? framedZigzag(items) ?? h : v);
   let node;
   if (cut) {
     const halves = [cut.sorted.slice(0, cut.i), cut.sorted.slice(cut.i)].map(build);
