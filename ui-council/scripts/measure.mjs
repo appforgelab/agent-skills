@@ -909,7 +909,14 @@ function compareRows(a, b, where) {
 // horizontal gutters are wider than the row gap, and then the rows are
 // never compared. Bands of children that overlap vertically are compared
 // directly, so no gutter width can hide a missing shared guide.
-function rowBands(items, where) {
+// The two sides of every zigzag cut under n, as sets of the items cut.
+function zigzagSides(n) {
+  const items = (k) => (k.leaf ? [k.leaf] : k.kids.flatMap(items));
+  const below = n.kids.flatMap(zigzagSides);
+  return n.zigzag ? [n.kids.map((k) => new Set(items(k))), ...below] : below;
+}
+
+function rowBands(items, where, top) {
   const bands = [];
   for (const it of [...items].sort((a, b) => a.ink.y0 - b.ink.y0 || a.ink.x0 - b.ink.x0)) {
     const h = it.ink.y1 - it.ink.y0;
@@ -970,25 +977,28 @@ function rowBands(items, where) {
   // are skipped when they sit beyond the sideways reach, or when each has
   // another band above or below it in its own column — one that overlaps
   // it sideways but not the other band: a column, however narrow its
-  // gutter. Partners may be single items, which are never compared
-  // themselves: in a column where only some rows carry a second item, the
-  // rest are what makes it a column. A full-width header or footer
-  // overlaps both, so it is nobody's column partner. Columns also
-  // interleave: the first band's column goes on below the pair, or the
-  // second's began above it. A one-sided header over the first band and a
-  // footer under the second frame a staircase, not columns. A lone row
-  // that drifted clear of the one above has no partner either way, so it
-  // is still compared and its key survives.
+  // gutter. A full-width header or footer overlaps both, so it is nobody's
+  // column partner. Columns also interleave: the first band's column goes
+  // on below the pair, or the second's began above it. A one-sided header
+  // over the first band and a footer under the second frame a staircase,
+  // not columns. A lone row that drifted clear of the one above has no
+  // partner either way, so it is still compared and its key survives.
+  // Rows on opposite sides of a zigzag cut are never a pair: the stack
+  // pass has already proved them separate columns, each with its own
+  // aligned rows, so no partner evidence is needed.
+  const sides = zigzagSides(top);
+  const across = (p, q) =>
+    sides.some(([a, b]) => (a.has(p.items[0]) && b.has(q.items[0])) || (b.has(p.items[0]) && a.has(q.items[0])));
   const overlapsX = (p, q) => Math.min(p.ink.x1, q.ink.x1) > Math.max(p.ink.x0, q.ink.x0);
-  // Positions, top to bottom, of the bands that overlap p sideways but not q.
-  const partners = (p, q) => bands.flatMap((o, k) => (o !== p && overlapsX(o, p) && !overlapsX(o, q) ? [k] : []));
+  // Indices of the bands that overlap band i sideways but not band j.
+  const partners = (i, j) => rows.flatMap((o, k) => (k !== i && overlapsX(o, rows[i]) && !overlapsX(o, rows[j]) ? [k] : []));
   for (let i = 0; i + 1 < rows.length; i++) {
     const [p, q] = [rows[i], rows[i + 1]];
+    if (across(p, q)) continue;
     if (!overlapsX(p, q)) {
       const apart = U(Math.max(p.ink.x0, q.ink.x0) - Math.min(p.ink.x1, q.ink.x1));
-      const [pp, qp] = [partners(p, q), partners(q, p)];
-      const [at, bt] = [bands.indexOf(p), bands.indexOf(q)];
-      const columns = pp.length > 0 && qp.length > 0 && (pp.some((k) => k > bt) || qp.some((k) => k < at));
+      const [pp, qp] = [partners(i, i + 1), partners(i + 1, i)];
+      const columns = pp.length > 0 && qp.length > 0 && (pp.some((k) => k > i + 1) || qp.some((k) => k < i));
       if (apart > SIDE_REACH || columns) continue;
     }
     compareRows(bandNode(rows[i]), bandNode(rows[i + 1]), where);
@@ -1089,7 +1099,7 @@ for (const c of [screen, ...elements]) {
   }
   analyse(top, c, c.root || c.visible ? c.ink : top.ink, frameName);
   // Rows of this container's own children, whatever groups the cut made.
-  rowBands(c.children, c.root ? "" : ` in "${c.name}"`);
+  rowBands(c.children, c.root ? "" : ` in "${c.name}"`, top);
 }
 
 // One defect can surface twice when the stack pass and the band pass
