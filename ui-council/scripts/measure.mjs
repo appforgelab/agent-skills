@@ -905,11 +905,18 @@ function compareRows(a, b, where) {
   }
 }
 
+// The two sides of every zigzag cut under n, as sets of the items cut.
+function zigzagSides(n) {
+  const items = (k) => (k.leaf ? [k.leaf] : k.kids.flatMap(items));
+  const below = n.kids.flatMap(zigzagSides);
+  return n.zigzag ? [n.kids.map((k) => new Set(items(k))), ...below] : below;
+}
+
 // The widest-gap cut can read two close rows of items as columns when the
 // horizontal gutters are wider than the row gap, and then the rows are
 // never compared. Bands of children that overlap vertically are compared
 // directly, so no gutter width can hide a missing shared guide.
-function rowBands(items, where) {
+function rowBands(items, where, top) {
   const bands = [];
   for (const it of [...items].sort((a, b) => a.ink.y0 - b.ink.y0 || a.ink.x0 - b.ink.x0)) {
     const h = it.ink.y1 - it.ink.y0;
@@ -976,11 +983,39 @@ function rowBands(items, where) {
   // over the first band and a footer under the second frame a staircase,
   // not columns. A lone row that drifted clear of the one above has no
   // partner either way, so it is still compared and its key survives.
+  // Rows wholly on opposite sides of a zigzag cut are not a pair when the
+  // two columns interleave right there: each row has another row of its
+  // own side strictly above or below it, within the four row heights
+  // compareRows reaches, and the two local columns — each row extended
+  // by those neighbours — overlap vertically. The stack pass has already
+  // proved both sides columns of aligned rows; the local overlap shows the
+  // pair sits inside them, not on a staircase or beside a distant control
+  // that happens to line up.
+  const sides = zigzagSides(top);
+  const across = (p, q) => {
+    const reach = 4 * Math.min(p.ink.y1 - p.ink.y0, q.ink.y1 - q.ink.y0);
+    // bd's vertical span with its nearby same-side rows, or null if none.
+    const local = (bd, side) => {
+      const near = [...side].filter((it) => {
+        const d = Math.max(it.ink.y0 - bd.ink.y1, bd.ink.y0 - it.ink.y1);
+        return d >= 0 && d <= reach;
+      });
+      if (near.length === 0) return null;
+      return [Math.min(bd.ink.y0, ...near.map((it) => it.ink.y0)), Math.max(bd.ink.y1, ...near.map((it) => it.ink.y1))];
+    };
+    const on = (bd, side) => bd.items.every((it) => side.has(it));
+    return sides.some(([a, b]) => {
+      if (!((on(p, a) && on(q, b)) || (on(p, b) && on(q, a)))) return false;
+      const [lp, lq] = [local(p, on(p, a) ? a : b), local(q, on(q, a) ? a : b)];
+      return lp && lq && Math.min(lp[1], lq[1]) > Math.max(lp[0], lq[0]);
+    });
+  };
   const overlapsX = (p, q) => Math.min(p.ink.x1, q.ink.x1) > Math.max(p.ink.x0, q.ink.x0);
   // Indices of the bands that overlap band i sideways but not band j.
   const partners = (i, j) => rows.flatMap((o, k) => (k !== i && overlapsX(o, rows[i]) && !overlapsX(o, rows[j]) ? [k] : []));
   for (let i = 0; i + 1 < rows.length; i++) {
     const [p, q] = [rows[i], rows[i + 1]];
+    if (across(p, q)) continue;
     if (!overlapsX(p, q)) {
       const apart = U(Math.max(p.ink.x0, q.ink.x0) - Math.min(p.ink.x1, q.ink.x1));
       const [pp, qp] = [partners(i, i + 1), partners(i + 1, i)];
@@ -1085,7 +1120,7 @@ for (const c of [screen, ...elements]) {
   }
   analyse(top, c, c.root || c.visible ? c.ink : top.ink, frameName);
   // Rows of this container's own children, whatever groups the cut made.
-  rowBands(c.children, c.root ? "" : ` in "${c.name}"`);
+  rowBands(c.children, c.root ? "" : ` in "${c.name}"`, top);
 }
 
 // One defect can surface twice when the stack pass and the band pass
