@@ -776,14 +776,14 @@ function zigzag(v) {
 // Interleaved columns framed by rows above and below, such as a two-sided
 // timeline between a header and a footer: no vertical cut crosses the
 // whole node, and the gaps between entries can be wider than those to the
-// frame, so the widest-gap cut would slice through the zigzag. Inside
-// either column some row covers every x, so the x ranges covered by the
-// fewest horizontal slices lie in the gutter, and their hull spans it,
-// even when a short title sits in its middle. A slice reaching into that
-// hull is frame, not column: the frame must be a run of slices at the top
-// and a run at the bottom. If the slices between them (four at least)
-// zigzag across the hull, return the cut at their edge, so they are kept
-// whole.
+// frame, so the widest-gap cut would slice through the zigzag. Only the
+// frame reaches into the gutter, so the gutter is among the x ranges
+// covered by the fewest horizontal slices — so may be a strip beside a
+// short entry. Each such range is a candidate, and so is the hull of two
+// neighbouring ones, a gutter split by a short title in its middle. For a
+// candidate, every slice reaching into it is frame: a run at the top and a
+// run at the bottom. If the slices between them (four at least) zigzag
+// across it, return the cut at their edge, so they are kept whole.
 function framedZigzag(items) {
   const cuts = clearCuts(items, "stack");
   if (cuts.length < 4) return null;
@@ -800,27 +800,32 @@ function framedZigzag(items) {
   const leftmost = Math.min(...boxes.map((b) => b.x1));
   const rightmost = Math.max(...boxes.map((b) => b.x0));
   let least = Infinity;
-  let hull = null;
+  let ranges = [];
   for (let k = 0, count = 0; k + 1 < xs.length; k++) {
     count += delta.get(xs[k]);
     const [g0, g1] = [xs[k], xs[k + 1]];
     if (leftmost > g0 || rightmost < g1) continue;
-    if (count < least) [least, hull] = [count, [g0, g1]];
-    else if (count === least) hull[1] = g1;
+    if (count < least) [least, ranges] = [count, []];
+    if (count > least) continue;
+    if (ranges.at(-1)?.[1] === g0) ranges.at(-1)[1] = g1;
+    else ranges.push([g0, g1]);
   }
   // No slice reaches across: a clear vertical cut, already tested.
-  if (!hull || least === 0) return null;
-  const [h0, h1] = hull;
-  const frame = boxes.flatMap((b, k) => (b.x1 > h0 && b.x0 < h1 ? [k] : []));
-  const head = frame.findIndex((k, j) => k !== j) === -1 ? frame.length : frame.findIndex((k, j) => k !== j);
-  const tail = frame.length - head;
-  if (frame.slice(head).some((k, j) => k !== n - tail + j) || n - frame.length < 4) return null;
-  const zig = clearCuts(sorted.slice(ends[head], ends[n - tail]), "row").find(zigzag);
-  if (!zig) return null;
-  const x1 = zig.sorted[zig.i].ink.x0;
-  const x0 = x1 - zig.gap;
-  if (!frame.every((k) => boxes[k].x1 > x0 && boxes[k].x0 < x1)) return null;
-  return head > 0 ? cuts[head - 1] : cuts[n - tail - 1];
+  if (least === 0 || ranges.length === 0) return null;
+  const candidates = [...ranges, ...ranges.slice(1).map((r, k) => [ranges[k][0], r[1]])];
+  for (const [h0, h1] of candidates) {
+    const frame = boxes.flatMap((b, k) => (b.x1 > h0 && b.x0 < h1 ? [k] : []));
+    let head = 0;
+    while (head < frame.length && frame[head] === head) head++;
+    const tail = frame.length - head;
+    if (frame.slice(head).some((k, j) => k !== n - tail + j) || n - frame.length < 4) continue;
+    const zig = clearCuts(sorted.slice(ends[head], ends[n - tail]), "row").find(zigzag);
+    if (!zig) continue;
+    const x1 = zig.sorted[zig.i].ink.x0;
+    const x0 = x1 - zig.gap;
+    if (frame.every((k) => boxes[k].x1 > x0 && boxes[k].x0 < x1)) return head > 0 ? cuts[head - 1] : cuts[n - tail - 1];
+  }
+  return null;
 }
 
 function build(items) {
