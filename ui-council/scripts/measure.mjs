@@ -721,6 +721,12 @@ function leafNames(n) {
 const joinNames = (names) =>
   names.length <= 3 ? names.join(" + ") : `${names[0]} + … + ${names.at(-1)} (${names.length})`;
 
+// A row's members at the depth of the container's own children: cut
+// groups mark that level as their leaves, band nodes hold it in kids.
+// Deeper (filled controls split into control and label) would name the
+// same row differently per pass and defeat the dedupe.
+const members = (n) => (n.span ? n.kids.map((k) => k.name) : leafNames(n)).sort();
+
 function build(items) {
   const ink = items.map((k) => k.ink).reduce(unionBox);
   const rect = items.map((k) => k.rect).reduce(unionBox);
@@ -826,7 +832,7 @@ function compareRows(a, b, where) {
     ]),
     y: y0,
   };
-  guideRows.set(m, [leafNames(a).sort(), leafNames(b).sort(), cls]);
+  guideRows.set(m, [members(a), members(b), cls, Boolean(a.span)]);
   measures.push(m);
   if (shared === 0) {
     findings.push(m);
@@ -1048,7 +1054,9 @@ for (const a of leaves) {
 // catch the same two rows through different groupings — one keeps a
 // spanning control in the row, the other does not — recording it under
 // two keys. Keep the band pass's record: it groups by vertical overlap,
-// not by the cut, so its key survives a cut change.
+// not by the cut, so its key survives a cut change. The signature's
+// fourth field marks band records, so the preference holds by flag, not
+// by the passes' order.
 const sameRows = (p, q) =>
   p[2] === q[2] &&
   (p[0].every((n) => q[0].includes(n)) || q[0].every((n) => p[0].includes(n))) &&
@@ -1061,12 +1069,13 @@ for (const f of findings) {
     keptFindings.push(f);
     continue;
   }
-  const i = sigs.findIndex((s) => sameRows(s, sig));
+  const i = sigs.findIndex((s) => sameRows(s.sig, sig));
   if (i < 0) {
     keptFindings.push(f);
-    sigs.push(sig);
-  } else {
-    keptFindings[i] = f;
+    sigs.push({ sig, at: keptFindings.length - 1, band: sig[3] });
+  } else if (sig[3] && !sigs[i].band) {
+    keptFindings[sigs[i].at] = f;
+    sigs[i] = { sig, at: sigs[i].at, band: true };
   }
 }
 findings.length = 0;
