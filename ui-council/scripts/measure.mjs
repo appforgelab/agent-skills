@@ -697,17 +697,23 @@ function record(kind, key, values, extra) {
 // a sidebar and its content, the cells of a grid — so keep their own
 // rhythm, and a gap that happens to line up across columns doesn't slice
 // through them. Cuts in the same direction flatten into one stack or row.
-function widestCut(items, dir) {
+// Every clear cut through items in one direction, as { dir, gap, i, sorted }:
+// the items before index i in sorted order lie wholly on one side.
+function clearCuts(items, dir) {
   const [a0, a1] = dir === "stack" ? ["y0", "y1"] : ["x0", "x1"];
   const sorted = [...items].sort((p, q) => p.ink[a0] - q.ink[a0]);
   let end = sorted[0].ink[a1];
-  let best = null;
+  const cuts = [];
   for (let i = 1; i < sorted.length; i++) {
     const gap = sorted[i].ink[a0] - end;
-    if (gap >= 0 && (!best || gap > best.gap)) best = { dir, gap, i, sorted };
+    if (gap >= 0) cuts.push({ dir, gap, i, sorted });
     end = Math.max(end, sorted[i].ink[a1]);
   }
-  return best;
+  return cuts;
+}
+
+function widestCut(items, dir) {
+  return clearCuts(items, dir).reduce((best, c) => (!best || c.gap > best.gap ? c : best), null);
 }
 
 // Names of the leaves under n: a built cut node, or an element (whose
@@ -736,19 +742,60 @@ const joinNames = (names) =>
 // same row differently per pass and defeat the dedupe.
 const members = (n) => (n.span ? n.kids.map((k) => k.name) : leafNames(n)).sort();
 
+// The row boxes of a set of items: split at every clear horizontal cut.
+function rowBoxes(items) {
+  const cuts = clearCuts(items, "stack");
+  if (cuts.length === 0) return [items.map((k) => k.ink).reduce(unionBox)];
+  const { sorted } = cuts[0];
+  const ends = [0, ...cuts.map((c) => c.i), sorted.length];
+  return ends.slice(1).map((e, j) => sorted.slice(ends[j], e).map((k) => k.ink).reduce(unionBox));
+}
+
+// Two sides of a vertical cut zigzag when each is a column of rows — two or
+// more rows lined up on their left or right edge, within the near-miss
+// band — the sides span the same height, and no item on one side shares a
+// line with any on the other: the rows alternate sides instead of running
+// across. Stacking them would compare each row with the other side's next
+// one. Aligned rows (a form, a grid) overlap across the cut; a lone drifted
+// row is one row; a staircase's sides don't span the same height; scattered
+// items line up on no edge.
+function zigzag(v) {
+  const [a, b] = [v.sorted.slice(0, v.i), v.sorted.slice(v.i)];
+  const column = (side) => {
+    const rows = rowBoxes(side);
+    const spread = (edge) => U(Math.max(...rows.map(edge)) - Math.min(...rows.map(edge)));
+    return rows.length >= 2 && (spread((r) => r.x0) <= NEAR || spread((r) => r.x1) <= NEAR);
+  };
+  if (!column(a) || !column(b)) return false;
+  const span = (side) => side.map((k) => k.ink).reduce(unionBox);
+  const [sa, sb] = [span(a), span(b)];
+  if (Math.min(sa.y1, sb.y1) <= Math.max(sa.y0, sb.y0)) return false;
+  return a.every((p) => b.every((q) => Math.min(p.ink.y1, q.ink.y1) <= Math.max(p.ink.y0, q.ink.y0)));
+}
+
 function build(items) {
   const ink = items.map((k) => k.ink).reduce(unionBox);
   const rect = items.map((k) => k.rect).reduce(unionBox);
   if (items.length === 1) return { leaf: items[0], kids: [], ink, rect, name: items[0].name };
   const h = widestCut(items, "stack");
   const v = widestCut(items, "row");
-  // Rows first: ragged rows leave accidental vertical gaps, so a vertical
-  // cut must be clearly wider (a sidebar, a column gutter) to win.
-  const cut = h && (!v || v.gap <= 2 * h.gap) ? h : v;
+  // A vertical cut whose two sides zigzag — chat bubbles left and right, a
+  // two-sided timeline — wins first, whatever the gap widths: it need not
+  // be the widest, since a gap inside a row (a bubble and its tick) can be
+  // wider than the gutter. Otherwise rows first: ragged rows leave
+  // accidental vertical gaps, so a vertical cut must be clearly wider (a
+  // sidebar, a column gutter) to win.
+  const zig = h && v ? clearCuts(items, "row").find(zigzag) : null;
+  const cut = zig ?? (h && (!v || v.gap <= 2 * h.gap) ? h : v);
   let node;
   if (cut) {
     const halves = [cut.sorted.slice(0, cut.i), cut.sorted.slice(cut.i)].map(build);
-    node = { dir: cut.dir, kids: halves.flatMap((k) => (k.dir === cut.dir ? k.kids : [k])), ink, rect };
+    // Same-direction cuts flatten into one stack or row — never into or out
+    // of a zigzag: its sides are separate columns, so neither a cut inside
+    // one side (bubbles and their status rail) nor a row around it (a
+    // sidebar beside the chat) may join its gutter in one row.
+    const flat = (k) => (k.dir === cut.dir && !k.zigzag ? k.kids : [k]);
+    node = { dir: cut.dir, zigzag: cut === zig, kids: cut === zig ? halves : halves.flatMap(flat), ink, rect };
   } else {
     // Overlapping items no cut separates: no rhythm to measure among them.
     node = { dir: "pile", kids: items.map((k) => build([k])), ink, rect };
@@ -980,10 +1027,11 @@ function analyse(n, c, frame, frameName) {
       });
     }
     // Guides: two stacked rows of several items each should share at least
-    // one vertical guide — a left edge, centre or right edge.
+    // one vertical guide — a left edge, centre or right edge. A zigzag is
+    // two columns, not a row of items: its sides' edges are no row's guides.
     for (let i = 0; i + 1 < kids.length; i++) {
       const [a, b] = [kids[i], kids[i + 1]];
-      if (a.dir !== "row" || b.dir !== "row") continue;
+      if (a.dir !== "row" || b.dir !== "row" || a.zigzag || b.zigzag) continue;
       compareRows(a, b, where);
     }
     // Centring: a part that sits almost, but not quite, centred.
