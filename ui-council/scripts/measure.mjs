@@ -1027,10 +1027,11 @@ function analyse(n, c, frame, frameName) {
       });
     }
     // Guides: two stacked rows of several items each should share at least
-    // one vertical guide — a left edge, centre or right edge.
+    // one vertical guide — a left edge, centre or right edge. A zigzag is
+    // two columns, not a row of items: its sides' edges are no row's guides.
     for (let i = 0; i + 1 < kids.length; i++) {
       const [a, b] = [kids[i], kids[i + 1]];
-      if (a.dir !== "row" || b.dir !== "row") continue;
+      if (a.dir !== "row" || b.dir !== "row" || a.zigzag || b.zigzag) continue;
       compareRows(a, b, where);
     }
     // Centring: a part that sits almost, but not quite, centred.
