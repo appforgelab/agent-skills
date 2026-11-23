@@ -790,7 +790,10 @@ function build(items) {
   let node;
   if (cut) {
     const halves = [cut.sorted.slice(0, cut.i), cut.sorted.slice(cut.i)].map(build);
-    node = { dir: cut.dir, kids: halves.flatMap((k) => (k.dir === cut.dir ? k.kids : [k])), ink, rect };
+    // Same-direction cuts flatten into one stack or row — except into a
+    // zigzag cut: its sides are separate columns, and a cut inside one side
+    // (bubbles and their status rail) must not join the gutter in one row.
+    node = { dir: cut.dir, kids: cut === zig ? halves : halves.flatMap((k) => (k.dir === cut.dir ? k.kids : [k])), ink, rect };
   } else {
     // Overlapping items no cut separates: no rhythm to measure among them.
     node = { dir: "pile", kids: items.map((k) => build([k])), ink, rect };
