@@ -753,11 +753,11 @@ function rowBoxes(items) {
 
 // Two sides of a vertical cut zigzag when each is a column of rows — two or
 // more rows lined up on their left or right edge, within the near-miss
-// band — the sides span the same height, and no item on one side shares a
-// line with any on the other: the rows alternate sides instead of running
+// band — the sides' vertical spans overlap, and no item on one side shares
+// a line with any on the other: the rows interleave instead of running
 // across. Stacking them would compare each row with the other side's next
 // one. Aligned rows (a form, a grid) overlap across the cut; a lone drifted
-// row is one row; a staircase's sides don't span the same height; scattered
+// row is one row; a staircase's sides don't overlap vertically; scattered
 // items line up on no edge.
 function zigzag(v) {
   const [a, b] = [v.sorted.slice(0, v.i), v.sorted.slice(v.i)];
