@@ -790,10 +790,12 @@ function build(items) {
   let node;
   if (cut) {
     const halves = [cut.sorted.slice(0, cut.i), cut.sorted.slice(cut.i)].map(build);
-    // Same-direction cuts flatten into one stack or row — except into a
-    // zigzag cut: its sides are separate columns, and a cut inside one side
-    // (bubbles and their status rail) must not join the gutter in one row.
-    node = { dir: cut.dir, kids: cut === zig ? halves : halves.flatMap((k) => (k.dir === cut.dir ? k.kids : [k])), ink, rect };
+    // Same-direction cuts flatten into one stack or row — never into or out
+    // of a zigzag: its sides are separate columns, so neither a cut inside
+    // one side (bubbles and their status rail) nor a row around it (a
+    // sidebar beside the chat) may join its gutter in one row.
+    const flat = (k) => (k.dir === cut.dir && !k.zigzag ? k.kids : [k]);
+    node = { dir: cut.dir, zigzag: cut === zig, kids: cut === zig ? halves : halves.flatMap(flat), ink, rect };
   } else {
     // Overlapping items no cut separates: no rhythm to measure among them.
     node = { dir: "pile", kids: items.map((k) => build([k])), ink, rect };
