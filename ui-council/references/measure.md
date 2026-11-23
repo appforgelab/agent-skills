@@ -36,7 +36,7 @@ later with no dependencies.
    sections: when each side holds at least two rows lined up on one edge,
    the two sides run alongside each other, and no row shares a line with
    the other side, each side is measured on its own, however narrow the
-   gutter.
+   gutter, even between a full-width header and footer.
 
 It reports:
 

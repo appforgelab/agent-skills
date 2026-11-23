@@ -773,6 +773,40 @@ function zigzag(v) {
   return a.every((p) => b.every((q) => Math.min(p.ink.y1, q.ink.y1) <= Math.max(p.ink.y0, q.ink.y0)));
 }
 
+// Interleaved columns framed by full-width rows, such as a two-sided
+// timeline between a header and a footer: no vertical cut crosses the
+// whole node, and the gaps between entries can be wider than those to the
+// frame, so the widest-gap cut would slice through the zigzag. A framed
+// run is a stretch of horizontal slices (four at least: two rows a side)
+// whose extents leave a vertical gap, bounded at each end by the node's
+// edge or by a slice reaching across that gap. Return the cut at the edge
+// of the largest one whose items zigzag, so the run is kept whole.
+function zigzagRun(items) {
+  const cuts = clearCuts(items, "stack");
+  if (cuts.length < 4) return null;
+  const { sorted } = cuts[0];
+  const ends = [0, ...cuts.map((c) => c.i), sorted.length];
+  const boxes = ends.slice(1).map((e, k) => sorted.slice(ends[k], e).map((it) => it.ink).reduce(unionBox));
+  // Merge a slice's extent into disjoint spans: two or more leave a gap.
+  const add = (spans, b) => {
+    const touching = spans.filter(([x0, x1]) => x0 < b.x1 && b.x0 < x1);
+    const merged = touching.reduce(([a, c], [x0, x1]) => [Math.min(a, x0), Math.max(c, x1)], [b.x0, b.x1]);
+    return [...spans.filter((sp) => !touching.includes(sp)), merged];
+  };
+  let best = null;
+  for (let i = 0; i + 4 <= boxes.length; i++) {
+    let spans = [[boxes[i].x0, boxes[i].x1]];
+    let j = i + 1;
+    for (let next; j < boxes.length && (next = add(spans, boxes[j])).length >= 2; j++) spans = next;
+    if (j - i < 4 || (i === 0 && j === boxes.length)) continue;
+    if (i > 0 && add(spans, boxes[i - 1]).length >= 2) continue;
+    const n = ends[j] - ends[i];
+    if ((!best || n > best.n) && clearCuts(sorted.slice(ends[i], ends[j]), "row").some(zigzag)) best = { n, i, j };
+  }
+  if (!best) return null;
+  return best.i > 0 ? cuts[best.i - 1] : cuts[best.j - 1];
+}
+
 function build(items) {
   const ink = items.map((k) => k.ink).reduce(unionBox);
   const rect = items.map((k) => k.rect).reduce(unionBox);
@@ -782,11 +816,13 @@ function build(items) {
   // A vertical cut whose two sides zigzag — interleaved columns, as in a
   // two-sided timeline — wins first, whatever the gap widths: it need not be
   // the widest, since a gap inside a row (an item and its trailing icon) can be
-  // wider than the gutter. Otherwise rows first: ragged rows leave accidental
-  // vertical gaps, so a vertical cut must be clearly wider (a sidebar, a
-  // column gutter) to win.
+  // wider than the gutter. Otherwise rows first: ragged rows leave
+  // accidental vertical gaps, so a vertical cut must be clearly wider (a
+  // sidebar, a column gutter) to win. A row cut never slices through a
+  // framed zigzag: its edge is cut first.
   const zig = h && v ? clearCuts(items, "row").find(zigzag) : null;
-  const cut = zig ?? (h && (!v || v.gap <= 2 * h.gap) ? h : v);
+  const rows = h && (!v || v.gap <= 2 * h.gap);
+  const cut = zig ?? (rows ? zigzagRun(items) ?? h : v);
   let node;
   if (cut) {
     const halves = [cut.sorted.slice(0, cut.i), cut.sorted.slice(cut.i)].map(build);
