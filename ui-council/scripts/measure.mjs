@@ -1047,21 +1047,25 @@ const keptRows = findings.map((f) => rowLeaves.get(f)).filter(Boolean);
 // A near miss is already reported when one kept guide finding has the two
 // elements inside members of its two rows, and the elements moved with
 // their members: on the near miss's own edge, both sit at the same inset
-// in their members, or both are centred in them — a centred label in a
-// shifted chip lands wherever its text width puts its edges. A near miss
+// in their members, or both are centred in them at the same offset — a
+// centred label in a shifted chip lands wherever its text width puts its
+// edges. Same offset, signed: two labels each within tolerance of centre
+// but on opposite sides of it are a defect of their own. A near miss
 // inside one member, or between contents that don't follow their members
 // (unequal padding in stacked cards), is a defect of its own.
 const EDGE = { "left edges": (b) => b.x0, centres: centre, "right edges": (b) => b.x1 };
 function explained(a, b, closest) {
   const edge = EDGE[closest.what];
-  const centred = (e, mm) => U(Math.abs(centre(e.ink) - centre(mm.box))) <= ALIGN;
+  const off = (e, mm) => U(centre(e.ink) - centre(mm.box));
   for (const [upper, lower] of keptRows) {
     for (const [ra, rb] of [[upper, lower], [lower, upper]]) {
       const ma = ra.find((mm) => mm.leaves.has(a.name));
       const mb = rb.find((mm) => mm.leaves.has(b.name));
       if (!ma || !mb) continue;
       const sameInset = U(Math.abs(closest.q - closest.p - (edge(mb.box) - edge(ma.box)))) <= ALIGN;
-      if (sameInset || (centred(a, ma) && centred(b, mb))) return true;
+      const [oa, ob] = [off(a, ma), off(b, mb)];
+      const centred = Math.abs(oa) <= ALIGN && Math.abs(ob) <= ALIGN && Math.abs(oa - ob) <= ALIGN;
+      if (sameInset || centred) return true;
     }
   }
   return false;
