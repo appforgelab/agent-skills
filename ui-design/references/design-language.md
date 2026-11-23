@@ -87,8 +87,13 @@ Ask:
 - Do the gaps read as multiples of a base, 4 or 8 points?
 - Do the same relationships repeat between similar elements: card padding,
   list gaps, section separation?
-- Do the edges that should align, align?
+- Do the edges that should align, align? Do stacked rows of small items
+  share vertical guides?
 - Is separation between groups visibly larger than spacing within a group?
+  Gaps should match or differ clearly, by about 1.75× or more. A gap 1.2× to
+  1.7× its neighbour reads as a mistake, not a group break.
+- Judge rendered gaps, not the values in the code. Padding and minimum hit
+  areas stack, so equal steps in code can render unequal.
 
 Anchors:
 
