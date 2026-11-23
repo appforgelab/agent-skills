@@ -792,15 +792,19 @@ function offCentre(item, frame, frameName, where) {
   if (cls === "near") findings.push(m);
 }
 
-const unguided = new Set();
 const guideSeen = new Set();
 // Per guides finding: the rows' members at the container's level and
 // whether the band pass made it, so two findings over the same rows
 // through different groupings dedupe at the findings stage.
 const guideRows = new Map();
-// Per guides finding: the element-tree leaves of both rows, so a kept
-// finding hides the near misses it already reports.
+// Per guides finding: each row's members, with their boxes and the
+// element-tree leaves inside them, so a kept finding can hide the near
+// misses it already reports — and only those.
 const rowLeaves = new Map();
+// How far sideways two things may sit and still be compared: twice the
+// vertical reach of a near miss. Far enough that a pair drifting into a
+// neighbouring column keeps its key; not across the page.
+const SIDE_REACH = 128;
 
 // Two stacked rows should share at least one vertical guide: a left edge,
 // centre or right edge. Related rows are of similar height, and close in
@@ -849,7 +853,8 @@ function compareRows(a, b, where) {
   if (shared === 0) {
     findings.push(m);
     guideRows.set(m, [members(a), members(b), Boolean(a.span)]);
-    rowLeaves.set(m, [...a.kids, ...b.kids].flatMap(treeLeaves));
+    const row = (n) => n.kids.map((k) => ({ box: k.ink, leaves: new Set(treeLeaves(k)) }));
+    rowLeaves.set(m, [row(a), row(b)]);
   }
 }
 
@@ -913,10 +918,11 @@ function rowBands(items, where) {
   // pairs the first could not, never record one twice.
   const unionNode = (bd) => ({ ...bandNode(bd), ink: bd.ink });
   for (let i = 0; i + 1 < rows.length; i++) {
-    // Consecutive bands from side-by-side columns with staggered rows don't
-    // overlap horizontally: nobody compares their guides. The cut compares
-    // each column's own rows.
-    if (Math.min(rows[i].ink.x1, rows[i + 1].ink.x1) <= Math.max(rows[i].ink.x0, rows[i + 1].ink.x0)) continue;
+    // Consecutive bands from side-by-side columns with staggered rows sit
+    // far apart sideways: nobody compares their guides, and the cut compares
+    // each column's own rows. A row that merely drifted clear of the one
+    // above is still compared, so its key survives the drift.
+    if (U(Math.max(rows[i].ink.x0, rows[i + 1].ink.x0) - Math.min(rows[i].ink.x1, rows[i + 1].ink.x1)) > SIDE_REACH) continue;
     compareRows(bandNode(rows[i]), bandNode(rows[i + 1]), where);
     compareRows(unionNode(rows[i]), unionNode(rows[i + 1]), where);
   }
@@ -1036,7 +1042,28 @@ const covered = (f) => {
 const keptFindings = findings.filter((f) => !covered(f));
 findings.length = 0;
 findings.push(...keptFindings);
-for (const f of findings) for (const name of rowLeaves.get(f) ?? []) unguided.add(name);
+const keptRows = findings.map((f) => rowLeaves.get(f)).filter(Boolean);
+
+// A near miss is already reported when one kept guide finding has the two
+// elements inside members of its two rows, and the elements moved with
+// their members: on some edge — left, centre or right — the elements are
+// off by the members' own offset. A centred label in a shifted chip moves
+// by the chip's offset on centres. A near miss inside one member, or
+// between contents that don't follow their members (unequal padding in
+// stacked cards), is a defect of its own.
+const EDGES = [(b) => b.x0, centre, (b) => b.x1];
+function explained(a, b) {
+  for (const [upper, lower] of keptRows) {
+    for (const [ra, rb] of [[upper, lower], [lower, upper]]) {
+      const ma = ra.find((mm) => mm.leaves.has(a.name));
+      const mb = rb.find((mm) => mm.leaves.has(b.name));
+      if (!ma || !mb) continue;
+      const moved = (edge) => U(Math.abs(edge(b.ink) - edge(a.ink) - (edge(mb.box) - edge(ma.box)))) <= ALIGN;
+      if (EDGES.some(moved)) return true;
+    }
+  }
+  return false;
+}
 
 // Near misses: an element and the nearest element stacked under it whose
 // edges almost — but not quite — line up.
@@ -1061,7 +1088,7 @@ for (const a of leaves) {
     // neighbouring column is still worth re-measuring, the far side of
     // the page is not, and a dense grid must not pair every leaf with
     // every leaf below it.
-    if (U(Math.max(a.ink.x0, b.ink.x0) - Math.min(a.ink.x1, b.ink.x1)) > 128) continue;
+    if (U(Math.max(a.ink.x0, b.ink.x0) - Math.min(a.ink.x1, b.ink.x1)) > SIDE_REACH) continue;
     const options = [
       ["left edges", a.ink.x0, b.ink.x0],
       ["centres", (a.ink.x0 + a.ink.x1) / 2, (b.ink.x0 + b.ink.x1) / 2],
@@ -1084,7 +1111,7 @@ for (const a of leaves) {
       y: a.ink.y0,
     };
     measures.push(m);
-    if (b === best && cls === "near" && !(unguided.has(a.name) && unguided.has(b.name))) findings.push(m);
+    if (b === best && cls === "near" && !explained(a, b)) findings.push(m);
   }
 }
 
