@@ -721,6 +721,12 @@ function leafNames(n) {
 const joinNames = (names) =>
   names.length <= 3 ? names.join(" + ") : `${names[0]} + … + ${names.at(-1)} (${names.length})`;
 
+// A row's members at the depth of the container's own children: cut
+// groups mark that level as their leaves, band nodes hold it in kids.
+// Deeper (filled controls split into control and label) would name the
+// same row differently per pass and defeat the dedupe.
+const members = (n) => (n.span ? n.kids.map((k) => k.name) : leafNames(n)).sort();
+
 function build(items) {
   const ink = items.map((k) => k.ink).reduce(unionBox);
   const rect = items.map((k) => k.rect).reduce(unionBox);
@@ -779,6 +785,10 @@ function offCentre(item, frame, frameName, where) {
 
 const unguided = new Set();
 const guideSeen = new Set();
+// Per guides record, the rows' leaf names and class: two records over the
+// same rows through different groupings dedupe at the findings stage.
+const guideRows = new Map();
+const rowLeaves = new Map();
 
 // Two stacked rows should share at least one vertical guide: a left edge,
 // centre or right edge. Related rows are of similar height, and close in
@@ -805,24 +815,28 @@ function compareRows(a, b, where) {
       }
     }
   }
+  const cls = shared === 0 ? "no-guide" : "aligned";
+  // The overlay guides and sort position follow the rows' real extent,
+  // not the comparison boxes: a band's box is its typical member, its
+  // members may reach further.
+  const [y0, y1] = [(a.span ?? a.ink).y0, (b.span ?? b.ink).y1];
   const m = {
     kind: "guides",
     key,
     shared,
     closest: Math.round(closest * 10) / 10,
-    cls: shared === 0 ? "no-guide" : "aligned",
+    cls,
     text: `rows "${a.name}" and "${b.name}"${where} share no vertical guide: no left edge, centre or right edge lines up (closest pair ${fmt(closest)} apart; rows span ${fmt(U(a.ink.x0))}–${fmt(U(a.ink.x1))} and ${fmt(U(b.ink.x0))}–${fmt(U(b.ink.x1))})`,
     draw: [...a.kids, ...b.kids].flatMap((k) => [
-      { guide: true, x: k.ink.x0, y0: a.ink.y0, y1: b.ink.y1 },
-      { guide: true, x: k.ink.x1 - 1, y0: a.ink.y0, y1: b.ink.y1 },
+      { guide: true, x: k.ink.x0, y0, y1 },
+      { guide: true, x: k.ink.x1 - 1, y0, y1 },
     ]),
-    y: a.ink.y0,
+    y: y0,
   };
+  guideRows.set(m, [members(a), members(b), cls, Boolean(a.span)]);
   measures.push(m);
-  if (shared === 0) {
-    findings.push(m);
-    for (const k of [...a.kids, ...b.kids]) for (const name of leafNames(k)) unguided.add(name);
-  }
+  rowLeaves.set(m, [...a.kids, ...b.kids].flatMap(leafNames));
+  if (shared === 0) findings.push(m);
 }
 
 // The widest-gap cut can read two close rows of items as columns when the
@@ -872,6 +886,8 @@ function rowBands(items, where) {
       kids: bd.items,
       ink: { x0: bd.ink.x0, x1: bd.ink.x1, y0: c - h / 2, y1: c + h / 2 },
       rect: bd.rect,
+      // The members' full extent, for overlay guides and sort position.
+      span: bd.ink,
     };
   };
   // Each band pair is compared twice: with the typical-member boxes, and
@@ -982,6 +998,28 @@ for (const c of [screen, ...elements]) {
   // Rows of this container's own children, whatever groups the cut made.
   rowBands(c.children, c.root ? "" : ` in "${c.name}"`);
 }
+
+// One defect can surface twice when the stack pass and the band pass
+// catch the same two rows through different groupings — one keeps a
+// spanning control in the row, the other does not — recording it under
+// two keys. A band row can also span several columns and cover each
+// column's stack record. Keep the band pass's record and drop every stack
+// record it covers: the band groups by vertical overlap, not by the cut,
+// so its key survives a cut change. Only the records kept here hide near
+// misses between their members.
+const sameRows = (p, q) =>
+  p[2] === q[2] &&
+  (p[0].every((n) => q[0].includes(n)) || q[0].every((n) => p[0].includes(n))) &&
+  (p[1].every((n) => q[1].includes(n)) || q[1].every((n) => p[1].includes(n)));
+const bandSigs = findings.map((f) => guideRows.get(f)).filter((s) => s?.[3]);
+const covered = (f) => {
+  const s = guideRows.get(f);
+  return s && !s[3] && bandSigs.some((b) => sameRows(b, s));
+};
+const keptFindings = findings.filter((f) => !covered(f));
+findings.length = 0;
+findings.push(...keptFindings);
+for (const f of findings) for (const name of rowLeaves.get(f) ?? []) unguided.add(name);
 
 // Near misses: an element and the nearest element stacked under it whose
 // edges almost — but not quite — line up.
