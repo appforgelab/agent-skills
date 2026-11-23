@@ -53,10 +53,10 @@ It reports:
   one is a deliberate group break. Wider steps are plainly deliberate.
 - **Gaps:** every vertical gap.
 
-Every centring and alignment pair is kept in `--json`, classed `flush`,
-`aligned`, `near`, `off` or `wide` (filling its frame, so it has no
-centre a reader would judge); only the `near` band is a finding. All
-thresholds are options; see `--help`.
+Every centring pair and every alignment pair within reach is kept in
+`--json`, classed `flush`, `aligned`, `near`, `off` or `wide` (filling
+its frame, so it has no centre a reader would judge); only the `near`
+band is a finding. All thresholds are options; see `--help`.
 
 ## Scale
 
