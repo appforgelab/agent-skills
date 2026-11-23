@@ -924,15 +924,21 @@ function rowBands(items, where) {
   // another band above or below it in its own column — one that overlaps
   // it sideways but not the other band: a column, however narrow its
   // gutter. A full-width header or footer overlaps both, so it is nobody's
-  // column partner. A lone row that drifted clear of the one above has no
-  // partner, so it is still compared and its key survives the drift.
+  // column partner. Columns also interleave: the first band's column goes
+  // on below the pair, or the second's began above it. A one-sided header
+  // over the first band and a footer under the second frame a staircase,
+  // not columns. A lone row that drifted clear of the one above has no
+  // partner either way, so it is still compared and its key survives.
   const overlapsX = (p, q) => Math.min(p.ink.x1, q.ink.x1) > Math.max(p.ink.x0, q.ink.x0);
-  const inColumn = (bd, other) => rows.some((o) => o !== bd && overlapsX(o, bd) && !overlapsX(o, other));
+  // Indices of the bands that overlap band i sideways but not band j.
+  const partners = (i, j) => rows.flatMap((o, k) => (k !== i && overlapsX(o, rows[i]) && !overlapsX(o, rows[j]) ? [k] : []));
   for (let i = 0; i + 1 < rows.length; i++) {
     const [p, q] = [rows[i], rows[i + 1]];
     if (!overlapsX(p, q)) {
       const apart = U(Math.max(p.ink.x0, q.ink.x0) - Math.min(p.ink.x1, q.ink.x1));
-      if (apart > SIDE_REACH || (inColumn(p, q) && inColumn(q, p))) continue;
+      const [pp, qp] = [partners(i, i + 1), partners(i + 1, i)];
+      const columns = pp.length > 0 && qp.length > 0 && (pp.some((k) => k > i + 1) || qp.some((k) => k < i));
+      if (apart > SIDE_REACH || columns) continue;
     }
     compareRows(bandNode(rows[i]), bandNode(rows[i + 1]), where);
     compareRows(unionNode(rows[i]), unionNode(rows[i + 1]), where);
