@@ -788,6 +788,7 @@ const guideSeen = new Set();
 // Per guides record, the rows' leaf names and class: two records over the
 // same rows through different groupings dedupe at the findings stage.
 const guideRows = new Map();
+const rowLeaves = new Map();
 
 // Two stacked rows should share at least one vertical guide: a left edge,
 // centre or right edge. Related rows are of similar height, and close in
@@ -834,10 +835,8 @@ function compareRows(a, b, where) {
   };
   guideRows.set(m, [members(a), members(b), cls, Boolean(a.span)]);
   measures.push(m);
-  if (shared === 0) {
-    findings.push(m);
-    for (const k of [...a.kids, ...b.kids]) for (const name of leafNames(k)) unguided.add(name);
-  }
+  rowLeaves.set(m, [...a.kids, ...b.kids].flatMap(leafNames));
+  if (shared === 0) findings.push(m);
 }
 
 // The widest-gap cut can read two close rows of items as columns when the
@@ -1000,6 +999,28 @@ for (const c of [screen, ...elements]) {
   rowBands(c.children, c.root ? "" : ` in "${c.name}"`);
 }
 
+// One defect can surface twice when the stack pass and the band pass
+// catch the same two rows through different groupings — one keeps a
+// spanning control in the row, the other does not — recording it under
+// two keys. A band row can also span several columns and cover each
+// column's stack record. Keep the band pass's record and drop every stack
+// record it covers: the band groups by vertical overlap, not by the cut,
+// so its key survives a cut change. Only the records kept here hide near
+// misses between their members.
+const sameRows = (p, q) =>
+  p[2] === q[2] &&
+  (p[0].every((n) => q[0].includes(n)) || q[0].every((n) => p[0].includes(n))) &&
+  (p[1].every((n) => q[1].includes(n)) || q[1].every((n) => p[1].includes(n)));
+const bandSigs = findings.map((f) => guideRows.get(f)).filter((s) => s?.[3]);
+const covered = (f) => {
+  const s = guideRows.get(f);
+  return s && !s[3] && bandSigs.some((b) => sameRows(b, s));
+};
+const keptFindings = findings.filter((f) => !covered(f));
+findings.length = 0;
+findings.push(...keptFindings);
+for (const f of findings) for (const name of rowLeaves.get(f) ?? []) unguided.add(name);
+
 // Near misses: an element and the nearest element stacked under it whose
 // edges almost — but not quite — line up.
 const leaves = elements.filter((e) => e.children.length === 0);
@@ -1050,36 +1071,6 @@ for (const a of leaves) {
   }
 }
 
-// One defect can surface twice when the stack pass and the band pass
-// catch the same two rows through different groupings — one keeps a
-// spanning control in the row, the other does not — recording it under
-// two keys. Keep the band pass's record: it groups by vertical overlap,
-// not by the cut, so its key survives a cut change. The signature's
-// fourth field marks band records, so the preference holds by flag, not
-// by the passes' order.
-const sameRows = (p, q) =>
-  p[2] === q[2] &&
-  (p[0].every((n) => q[0].includes(n)) || q[0].every((n) => p[0].includes(n))) &&
-  (p[1].every((n) => q[1].includes(n)) || q[1].every((n) => p[1].includes(n)));
-const keptFindings = [];
-const sigs = [];
-for (const f of findings) {
-  const sig = guideRows.get(f);
-  if (!sig) {
-    keptFindings.push(f);
-    continue;
-  }
-  const i = sigs.findIndex((s) => sameRows(s.sig, sig));
-  if (i < 0) {
-    keptFindings.push(f);
-    sigs.push({ sig, at: keptFindings.length - 1, band: sig[3] });
-  } else if (sig[3] && !sigs[i].band) {
-    keptFindings[sigs[i].at] = f;
-    sigs[i] = { sig, at: sigs[i].at, band: true };
-  }
-}
-findings.length = 0;
-findings.push(...keptFindings);
 findings.sort((a, b) => a.y - b.y);
 findings.forEach((f, i) => (f.n = i + 1));
 
