@@ -32,9 +32,11 @@ later with no dependencies.
 3. Inside each container (the screen, a card, a panel), it groups the blocks
    by cutting at the widest clear gap first. Columns such as a sidebar and
    its content, or the cells of a grid, keep their own rhythm. So do
-   zigzag layouts, such as chat bubbles left and right or a two-sided
-   timeline: when rows alternate sides without sharing a line, each side is
-   measured on its own, however narrow the gutter.
+   interleaved columns, such as a two-sided timeline or alternating feature
+   sections: when each side holds at least two rows lined up on one edge,
+   the two sides run alongside each other, and no row shares a line with
+   the other side, each side is measured on its own, however narrow the
+   gutter.
 
 It reports:
 

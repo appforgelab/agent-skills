@@ -753,11 +753,11 @@ function rowBoxes(items) {
 
 // Two sides of a vertical cut zigzag when each is a column of rows — two or
 // more rows lined up on their left or right edge, within the near-miss
-// band — the sides span the same height, and no item on one side shares a
-// line with any on the other: the rows alternate sides instead of running
+// band — the sides' vertical spans overlap, and no item on one side shares
+// a line with any on the other: the rows interleave instead of running
 // across. Stacking them would compare each row with the other side's next
 // one. Aligned rows (a form, a grid) overlap across the cut; a lone drifted
-// row is one row; a staircase's sides don't span the same height; scattered
+// row is one row; a staircase's sides don't overlap vertically; scattered
 // items line up on no edge.
 function zigzag(v) {
   const [a, b] = [v.sorted.slice(0, v.i), v.sorted.slice(v.i)];
@@ -779,12 +779,12 @@ function build(items) {
   if (items.length === 1) return { leaf: items[0], kids: [], ink, rect, name: items[0].name };
   const h = widestCut(items, "stack");
   const v = widestCut(items, "row");
-  // A vertical cut whose two sides zigzag — chat bubbles left and right, a
-  // two-sided timeline — wins first, whatever the gap widths: it need not
-  // be the widest, since a gap inside a row (a bubble and its tick) can be
-  // wider than the gutter. Otherwise rows first: ragged rows leave
-  // accidental vertical gaps, so a vertical cut must be clearly wider (a
-  // sidebar, a column gutter) to win.
+  // A vertical cut whose two sides zigzag — interleaved columns, as in a
+  // two-sided timeline — wins first, whatever the gap widths: it need not be
+  // the widest, since a gap inside a row (an item and its trailing icon) can be
+  // wider than the gutter. Otherwise rows first: ragged rows leave accidental
+  // vertical gaps, so a vertical cut must be clearly wider (a sidebar, a
+  // column gutter) to win.
   const zig = h && v ? clearCuts(items, "row").find(zigzag) : null;
   const cut = zig ?? (h && (!v || v.gap <= 2 * h.gap) ? h : v);
   let node;
@@ -792,8 +792,8 @@ function build(items) {
     const halves = [cut.sorted.slice(0, cut.i), cut.sorted.slice(cut.i)].map(build);
     // Same-direction cuts flatten into one stack or row — never into or out
     // of a zigzag: its sides are separate columns, so neither a cut inside
-    // one side (bubbles and their status rail) nor a row around it (a
-    // sidebar beside the chat) may join its gutter in one row.
+    // one side (items and an icon rail beside them) nor a row around it (a
+    // sidebar beside the zigzag) may join its gutter in one row.
     const flat = (k) => (k.dir === cut.dir && !k.zigzag ? k.kids : [k]);
     node = { dir: cut.dir, zigzag: cut === zig, kids: cut === zig ? halves : halves.flatMap(flat), ink, rect };
   } else {
