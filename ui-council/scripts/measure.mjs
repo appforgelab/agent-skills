@@ -776,14 +776,12 @@ function zigzag(v) {
 // Interleaved columns framed by rows above and below, such as a two-sided
 // timeline between a header and a footer: no vertical cut crosses the
 // whole node, and the gaps between entries can be wider than those to the
-// frame, so the widest-gap cut would slice through the zigzag. Only the
-// frame reaches into the gutter, so the gutter is among the x ranges
-// covered by the fewest horizontal slices — so may be a strip beside a
-// short entry. Each such range is a candidate, and so is the hull of two
-// neighbouring ones, a gutter split by a short title in its middle. For a
-// candidate, every slice reaching into it is frame: a run at the top and a
-// run at the bottom. If the slices between them (four at least) zigzag
-// across it, return the cut at their edge, so they are kept whole.
+// frame, so the widest-gap cut would slice through the zigzag. A vertical
+// line through the gutter crosses every frame slice and no slice between
+// them: find each line crossing a run of slices at the top and a run at
+// the bottom and nothing else, and if the slices between them (four at
+// least) zigzag across a gutter every frame slice reaches into, return
+// the cut at their edge, so they are kept whole.
 function framedZigzag(items) {
   const cuts = clearCuts(items, "stack");
   if (cuts.length < 4) return null;
@@ -791,38 +789,44 @@ function framedZigzag(items) {
   const ends = [0, ...cuts.map((c) => c.i), sorted.length];
   const n = ends.length - 1;
   const boxes = ends.slice(1).map((e, k) => sorted.slice(ends[k], e).map((it) => it.ink).reduce(unionBox));
-  const delta = new Map();
-  for (const b of boxes) {
-    delta.set(b.x0, (delta.get(b.x0) ?? 0) + 1);
-    delta.set(b.x1, (delta.get(b.x1) ?? 0) - 1);
+  // Lines are taken between consecutive slice edges: span[k] holds the
+  // range of those gaps that slice k crosses.
+  const xs = [...new Set(boxes.flatMap((b) => [b.x0, b.x1]))].sort((a, b) => a - b);
+  const at = new Map(xs.map((x, i) => [x, i]));
+  const m = xs.length - 1;
+  const span = boxes.map((b) => [at.get(b.x0), at.get(b.x1) - 1]);
+  const crossed = new Array(m + 1).fill(0);
+  for (const [a, b] of span) {
+    crossed[a]++;
+    crossed[b + 1]--;
   }
-  const xs = [...delta.keys()].sort((a, b) => a - b);
-  const leftmost = Math.min(...boxes.map((b) => b.x1));
-  const rightmost = Math.max(...boxes.map((b) => b.x0));
-  let least = Infinity;
-  let ranges = [];
-  for (let k = 0, count = 0; k + 1 < xs.length; k++) {
-    count += delta.get(xs[k]);
-    const [g0, g1] = [xs[k], xs[k + 1]];
-    if (leftmost > g0 || rightmost < g1) continue;
-    if (count < least) [least, ranges] = [count, []];
-    if (count > least) continue;
-    if (ranges.at(-1)?.[1] === g0) ranges.at(-1)[1] = g1;
-    else ranges.push([g0, g1]);
+  for (let e = 1; e < m; e++) crossed[e] += crossed[e - 1];
+  // How many slices in a row, from one end, each line crosses: the lines
+  // still crossed by all so far form one shrinking range.
+  const runs = (order) => {
+    const out = new Array(m).fill(order.length);
+    let [lo, hi] = [0, m - 1];
+    for (let j = 0; j < order.length && lo <= hi; j++) {
+      const [a, b] = span[order[j]];
+      for (let e = lo; e <= Math.min(hi, a - 1); e++) out[e] = j;
+      for (let e = Math.max(lo, b + 1); e <= hi; e++) out[e] = j;
+      [lo, hi] = [Math.max(lo, a), Math.min(hi, b)];
+    }
+    return out;
+  };
+  const down = [...Array(n).keys()];
+  const [heads, tails] = [runs(down), runs([...down].reverse())];
+  const frames = new Map();
+  for (let e = 0; e < m; e++) {
+    const [head, tail] = [heads[e], tails[e]];
+    if (head + tail >= 1 && crossed[e] === head + tail && n - head - tail >= 4) frames.set(`${head},${tail}`, [head, tail]);
   }
-  // No slice reaches across: a clear vertical cut, already tested.
-  if (least === 0 || ranges.length === 0) return null;
-  const candidates = [...ranges, ...ranges.slice(1).map((r, k) => [ranges[k][0], r[1]])];
-  for (const [h0, h1] of candidates) {
-    const frame = boxes.flatMap((b, k) => (b.x1 > h0 && b.x0 < h1 ? [k] : []));
-    let head = 0;
-    while (head < frame.length && frame[head] === head) head++;
-    const tail = frame.length - head;
-    if (frame.slice(head).some((k, j) => k !== n - tail + j) || n - frame.length < 4) continue;
+  for (const [head, tail] of [...frames.values()].sort((p, q) => p[0] + p[1] - q[0] - q[1])) {
     const zig = clearCuts(sorted.slice(ends[head], ends[n - tail]), "row").find(zigzag);
     if (!zig) continue;
     const x1 = zig.sorted[zig.i].ink.x0;
     const x0 = x1 - zig.gap;
+    const frame = [...down.slice(0, head), ...down.slice(n - tail)];
     if (frame.every((k) => boxes[k].x1 > x0 && boxes[k].x0 < x1)) return head > 0 ? cuts[head - 1] : cuts[n - tail - 1];
   }
   return null;
