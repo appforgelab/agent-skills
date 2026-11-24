@@ -157,3 +157,10 @@ glance there. Drop the findings it explains.
   estimate, and findings on them are noise.
 - Vertical centring inside a component is left out, because font metrics
   dominate it.
+- Interleaved columns are found only when one vertical cut separates them
+  across their whole container. Framed tightly by rows that reach across
+  the gutter, such as a header and a footer closer to the entries than the
+  entries are to each other, they are cut into horizontal slices instead.
+  Their entries are then compared across sides: uneven gaps against the
+  header or footer, and rows that share no guide. The overlay shows these
+  pairs spanning the gutter; drop them as misreads.
