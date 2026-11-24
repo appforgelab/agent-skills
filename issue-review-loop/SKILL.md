@@ -47,8 +47,10 @@ the issue or pushed back, hand it back for review, in a loop.
    you did or why you pushed back on each.
 5. Stop when the reviewer approves, or what's left is style, preference or
    points you have already pushed back on; if two rounds in a row yield
-   only pushbacks or nits, don't start another. Then report to the user:
-   what changed, what you pushed back on, follow-up issues, and the open
-   questions. Don't start implementing.
+   only pushbacks or nits, don't start another. If each round finds new
+   real failures of the same approach, stop and ask the user whether to
+   change the approach or the scope instead of patching again. Then report
+   to the user: what changed, what you pushed back on, follow-up issues,
+   and the open questions. Don't start implementing.
 
 If `delegate_task` isn't available, say so and stop. Don't fake the review.

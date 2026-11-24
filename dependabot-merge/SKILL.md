@@ -43,36 +43,15 @@ Sort them without hardcoding the repo's layout:
 1. Comment `@dependabot rebase` on the current PR only. Never rebase,
    push or force-push a Dependabot branch yourself: the comment makes
    Dependabot re-resolve lockfiles instead of git-merging them.
-2. Wait for the rebase to land (2-10 min) and CI to finish. Pair a PR
-   watch with a single 5-10 min background timer that wakes you on
-   completion. Use one bounded sleep registered as a wake-up, not
-   polling: no loops or repeated checks while waiting. If your harness
-   lacks either capability, poll about once a minute if allowed. If
-   polling is also unavailable, stop and report the batch rather than
-   leaving a bare watch.
-
-   Tie each timer to its PR, comment, and wait phase. Retire it when
-   leaving that wait and ignore stale wake-ups. Stop watching a PR
-   when moving on or handing it back.
-
-   If the watch fires first, check the merge gates. An unrelated event
-   doesn't end the wait. When the timer fires (or the same interval
-   elapses while polling), check for a reaction on the rebase comment
-   or a branch ref that advanced after the comment timestamp. Either
-   acknowledges the comment. If neither happened, treat the comment as
-   ignored and advance to the next rung of the escalation ladder below.
-   Use a fresh deadline for each rebase comment.
-
-   If acknowledged, compare the branch ref with the PR head before
-   waiting again. If the ref advanced but the head is still on the old
-   SHA, force GitHub to recompute with a no-op base update:
-   `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -f base=main`.
-   If GitHub has not queued fresh CI, allow one separate 5-10 min wait
-   for it to do so, using the same wait mechanism. Hold and report the
-   PR if there is still no fresh run at that deadline.
-3. If the comment is ignored (no reaction on it, branch unmoved),
-   re-comment exactly once. Never spam: queued rebases force-push
-   mid-run and restart CI.
+2. Wait for the rebase to land (2-10 min) and CI to finish. Watch the PR
+   with one bounded timer of 5-10 min as a fallback, not a polling loop.
+   The comment is acknowledged when it gets a reaction or the branch moves
+   after it. If the branch moved but the PR head didn't, nudge GitHub with
+   `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -f base=main`. If no
+   fresh CI run starts within another 5-10 min, hold and report the PR.
+3. If the comment is ignored (no reaction, branch unmoved by the
+   deadline), re-comment exactly once. Never spam: queued rebases
+   force-push mid-run and restart CI.
 4. Merge only when all of these hold:
    - the check run IDs are new, not last cycle's green run;
    - `gh api repos/<owner>/<repo>/compare/main...<branch>` reports
@@ -107,21 +86,10 @@ Sort them without hardcoding the repo's layout:
 
 ## When a rebase comment won't stick
 
-Escalate in order, then stop:
-
-1. Comment `@dependabot rebase` via `gh`, then wait for acknowledgement
-   as described in step 2 of [Each cycle](#each-cycle).
-2. Re-comment once (rule above).
-3. If the API comment keeps being ignored, try the web UI. If
-   your harness has an in-app browser whose default profile is already
-   authenticated for GitHub (in T3 Code: the `preview_*` tools), open
-   the PR and post the comment there — or delegate exactly that one
-   comment to a browser-capable model. Use the same wait after posting.
-   Read-only otherwise: never enter credentials, and never drive the OS
-   keyboard.
-4. If the web UI is unavailable or its comment is also ignored, ask
-   the user to comment from their browser, and continue with the next
-   PR meanwhile.
+After the one re-comment, post the comment from the web UI if your harness
+has a browser already signed in to GitHub (never enter credentials).
+Otherwise ask the user to comment from their browser, and carry on with
+the next PR meanwhile.
 
 ## Report
 

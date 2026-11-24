@@ -49,8 +49,10 @@ loop.
    what you did or why you pushed back on each.
 6. Stop when the reviewer approves, or what's left is style, preference or
    points you have already pushed back on; if two rounds in a row yield
-   only pushbacks or nits, don't start another. Call `unwatch_pull_request`,
-   then report to the user: the PR, what changed in each round, what you
-   pushed back on, and any follow-up issues.
+   only pushbacks or nits, don't start another. If each round finds new
+   real failures of the same approach, stop and ask the user whether to
+   change the approach or the scope instead of patching again. Call
+   `unwatch_pull_request`, then report to the user: the PR, what changed in
+   each round, what you pushed back on, and any follow-up issues.
 
 If `delegate_task` isn't available, say so and stop. Don't fake the review.

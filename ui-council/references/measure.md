@@ -122,27 +122,14 @@ glance there. Drop the findings it explains.
   paddings and hit areas stack, so the numbers say what's wrong. Never
   prescribe a code value from them.
 - After a change, re-run on the new shot and compare the same keys in
-  `--json`: the recorded values say whether the relationship actually
-  moved, even once it stops being a finding. A fix that overshot reads as
-  a bigger `off`, not as silence. Every pair within reach is recorded —
-  64 units below, 128 to the side — however it drifted: flush to an edge,
-  apart past overlap, sideways into a neighbouring column, or grown to
-  fill its frame (`wide`). A fix that moves a pair past the sideways
-  reach drops its key: match the elements by their ink boxes instead.
-- Keys hold still only while the elements and their grouping hold still.
-  Screenshot blocks are numbered by position and repeated tree labels are
-  told apart by order, so moving one element can renumber its neighbours,
-  and a grouped name such as `block 1 + block 2` changes when the cut
-  changes. When keys appear or vanish, match the elements across the two
-  runs by their ink boxes in `elements` — or read the overlay — before
-  drawing a conclusion; a changed key on its own is not evidence.
-- A row pair across side-by-side columns is reported once, by the band
-  pass, and each column's own record stays in `--json`. Fixing one column
-  can turn the band `aligned` and bring the other column's record out as a
-  finding under a key not listed before: compare the `--json` keys, not
-  the findings list. Rows that look like separate columns aren't compared
-  as a pair at all, however close sideways, so their pair key can vanish
-  when a row moves into or out of a column.
+  `--json`: every pair within reach is recorded whatever its class, so the
+  values say whether a relationship moved, even once it stops being a
+  finding. A fix that overshot reads as a bigger `off`, not as silence.
+- Keys follow the elements and their grouping: blocks are numbered by
+  position, so moving one element can rename its neighbours and their
+  groups. When keys appear or vanish between runs, match the elements by
+  their ink boxes in `elements`, or on the overlay, before drawing a
+  conclusion.
 
 ## Limits
 
